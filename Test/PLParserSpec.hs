@@ -12,6 +12,7 @@ HSpec tests for PLParser.
 module PLParserSpec where
 
 import PLParser
+import PLParser.Cursor
 import PLParser.Expected
 import Data.Char (ord,chr)
 import Data.Text (Text)
@@ -36,15 +37,21 @@ spec = describe "PLParser" $ sequence_
 
 -- True if the text is parsed successfully to some result, perhaps with some leftovers
 parses :: Parser a -> Text -> Bool
-parses p txt = parsesSuchThat p txt (\_ _ -> True)
+parses p txt = parsesSuchThat p txt (\_ _ -> True) (\_ _ -> False)
 
 -- True if the text parses successfully to some result and then a predicate succeeds
-parsesSuchThat :: Parser a -> Text -> (a -> Cursor -> Bool) -> Bool
-parsesSuchThat p txt pred = case runParser p txt of
-  ParseFailure _ _
-    -> False
+parsesSuchThat
+  :: Parser a
+  -> Text
+  -> (a -> Cursor -> Bool)
+  -> ([(Expected,Cursor)] -> Cursor -> Bool)
+  -> Bool
+parsesSuchThat p txt successPred failurePred = case runParser p txt of
+  ParseFailure exp c
+    -> failurePred exp c
+
   ParseSuccess a c
-    -> pred a c
+    -> successPred a c
 
 -- A string of text with no spaces
 newtype TokenText = TokenText {_unTokenText :: Text} deriving Show
@@ -90,9 +97,7 @@ charSpec = describe "Single characters" $ do
     -- A character parses regardless of trailing text, which is unchanged.
     prop_charTrailingParse :: Char -> Text -> Bool
     prop_charTrailingParse c trailing =
-      charIs c `parsesSuchThat` Text.cons c trailing
-               $ \() csr
-                  -> remainder csr == trailing
+      parsesSuchThat (charIs c) (Text.cons c trailing) (\() csr -> remainder csr == trailing) (\_ _ -> False)
 
 -- Test the text parsers
 textSpec :: Spec
@@ -110,9 +115,7 @@ textSpec = describe "Text" $ do
     -- Text parses with any amount of trailing text, which is unaltered.
     prop_textTrailingParse :: Text -> Text -> Bool
     prop_textTrailingParse txt trailing =
-      textIs txt `parsesSuchThat` (txt <> trailing)
-                   $ \() csr
-                      -> remainder csr == trailing
+      parsesSuchThat (textIs txt) (txt <> trailing) (\() csr -> remainder csr == trailing) (\_ _ -> False)
 
     -- Text appended between a space is parsed by appending textIs parsers with
     -- a space in between.
@@ -124,9 +127,12 @@ textSpec = describe "Text" $ do
 altSpec :: Spec
 altSpec = describe "Alternatives (<|>)" $ do
   prop "Adding an alternative after a successful parse still succeeds" prop_trailingAlternatives
-  prop "Adding a parser which fails without consuming input before a successful parser still succeeds" prop_backtrackWhenNothingConsumed
-  prop "A parser which fails and consumes input before a successful parser should fail" prop_dontBacktrackWhenSomethingConsumed
-  prop "A parser which fails and consumes input before a successful parser should succeed if the first is wrapped with try" prop_backtrackWhenTry
+  describe "backtrack" $ do
+    prop "when the first parser fails but does not consume input" prop_backtrackWhenNothingConsumed
+    prop "when the first parser fails but was wrapped in a 'try'" prop_backtrackWhenTry
+    describe "exept when" $ do
+      prop "the first failing parser consumes input" prop_dontBacktrackWhenSomethingConsumed
+      prop "the first failing parser consumes input and leaves the cursor in the correct position" prop_dontBacktrackCorrectFailureCursor
   where
     prop_trailingAlternatives :: TokenText -> TokenText -> Bool
     prop_trailingAlternatives txt trailing =
@@ -143,6 +149,18 @@ altSpec = describe "Alternatives (<|>)" $ do
           txt                  = prefix <> suffix
           txtThatStartsTheSame = prefix <> (Text.singleton $ if s == maxBound then toEnum 0 else succ s) <> suffix
        in not . parses (textIs txtThatStartsTheSame <|> textIs prefix) $ txt
+
+    prop_dontBacktrackCorrectFailureCursor :: (Char,TokenText) -> (Char,TokenText) -> Bool
+    prop_dontBacktrackCorrectFailureCursor (p,ps) (s,ss) =
+      let prefix = Text.cons p (coerce ps)
+          suffix = Text.cons s (coerce ss)
+          txt                  = prefix <> suffix
+          txtThatStartsTheSame = prefix <> (Text.singleton $ if s == maxBound then toEnum 0 else succ s) <> suffix
+       in parsesSuchThat (textIs txtThatStartsTheSame <|> textIs prefix)
+                         txt
+                         (\_ _ -> False)
+                         (\exp (Cursor _ _ (Pos total _line _char)) -> total == Text.length prefix + 1)
+
 
     prop_backtrackWhenTry :: (Char,TokenText) -> (Char,TokenText) -> Bool
     prop_backtrackWhenTry (p,ps) (s,ss) =
