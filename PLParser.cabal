@@ -45,4 +45,5 @@ test-suite hspec
                      , GeneralizedNewtypeDeriving
                      , LambdaCase
     other-modules:     PLParserSpec
+                     , CursorSpec
 

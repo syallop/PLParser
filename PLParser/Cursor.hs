@@ -86,6 +86,7 @@ incPastChar c
   | otherwise = incAlongLine 1
 
 -- Increment the Cursor past the next character (if there is one), returning it
+-- TODO: Same as advance..
 incCursor :: Cursor -> Maybe (Char,Cursor)
 incCursor (Cursor prev next pos) = do
   (c,next') <- Text.uncons next
