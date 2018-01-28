@@ -126,6 +126,7 @@ altSpec = describe "Alternatives (<|>)" $ do
   prop "Adding an alternative after a successful parse still succeeds" prop_trailingAlternatives
   prop "Adding a parser which fails without consuming input before a successful parser still succeeds" prop_backtrackWhenNothingConsumed
   prop "A parser which fails and consumes input before a successful parser should fail" prop_dontBacktrackWhenSomethingConsumed
+  prop "A parser which fails and consumes input before a successful parser should succeed if the first is wrapped with try" prop_backtrackWhenTry
   where
     prop_trailingAlternatives :: TokenText -> TokenText -> Bool
     prop_trailingAlternatives txt trailing =
@@ -142,6 +143,15 @@ altSpec = describe "Alternatives (<|>)" $ do
           txt                  = prefix <> suffix
           txtThatStartsTheSame = prefix <> (Text.singleton $ if s == maxBound then toEnum 0 else succ s) <> suffix
        in not . parses (textIs txtThatStartsTheSame <|> textIs prefix) $ txt
+
+    prop_backtrackWhenTry :: (Char,TokenText) -> (Char,TokenText) -> Bool
+    prop_backtrackWhenTry (p,ps) (s,ss) =
+      let prefix = Text.cons p (coerce ps)
+          suffix = Text.cons s (coerce ss)
+          txt                  = prefix <> suffix
+          txtThatStartsTheSame = prefix <> (Text.singleton $ if s == maxBound then toEnum 0 else succ s) <> suffix
+       in parses (try (textIs txtThatStartsTheSame) <|> textIs prefix) $ txt
+
 
 appSpec :: Spec
 appSpec = describe "Applicative" $ do
