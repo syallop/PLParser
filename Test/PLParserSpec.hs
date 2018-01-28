@@ -2,7 +2,7 @@
            , FlexibleInstances
   #-}
 {-|
-Module      : ParserSpec
+Module      : PLParserSpec
 Copyright   : (c) Samuel A. Yallop, 2016
 Maintainer  : syallop@gmail.com
 Stability   : experimental
@@ -26,7 +26,7 @@ import Test.QuickCheck.Instances
 import Data.Coerce
 
 spec :: Spec
-spec = describe "Parser" $ sequence_
+spec = describe "PLParser" $ sequence_
   [ charSpec
   , textSpec
   , altSpec
