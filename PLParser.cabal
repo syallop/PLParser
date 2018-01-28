@@ -26,3 +26,23 @@ library
                      , text
   -- hs-source-dirs:      
   default-language:    Haskell2010
+
+test-suite hspec
+    type:              exitcode-stdio-1.0
+    main-is:           Spec.hs
+    hs-source-dirs:    Test
+
+    build-depends:     base >=4.7
+                     , text
+                     , hspec
+                     , QuickCheck
+                     , quickcheck-instances
+                     , PLParser
+
+    default-language:  Haskell2010
+
+    other-extensions:  OverloadedStrings
+                     , GeneralizedNewtypeDeriving
+                     , LambdaCase
+    other-modules:     PLParserSpec
+

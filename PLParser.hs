@@ -17,7 +17,7 @@ A NIH parser currently for use with an in-progress Programming Language.
 module PLParser
   ( -- Core parser functions
     ParseResult(..)
-  , Parser ()
+  , Parser (..)
   , runParser
   , pFail
   , pSucceed
