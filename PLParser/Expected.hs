@@ -39,14 +39,15 @@ import qualified Data.Text as Text
 -- TODO: Abstract Text so that other types like Doc can be used.
 data Expected
   = ExpectEither Expected Expected         -- Expected either of
-  | ExpectOneOf [Text]                     -- Expected any of
   | ExpectPredicate Label (Maybe Expected) -- Failed predicate with label
   | ExpectAnything                         -- Expected anything => got an EOF
   | ExpectN Int Expected                   -- Expected a N repetitions
   | ExpectLabel Label Expected             -- Expected something with a label
   | ExpectThen Expected Expected           -- Expected something followed by something
+  | ExpectFail                             -- Expected to fail
+  | ExpectText Text                        -- Expected exact text
   deriving Show
 
 expectNothing :: Expected
-expectNothing = ExpectOneOf []
+expectNothing = ExpectFail
 

@@ -294,7 +294,7 @@ takeCharIf pred = sat pred takeChar
 charIs
   :: Char
   -> Parser ()
-charIs c = req $ takeCharIf (Predicate (== c) (ExpectOneOf [Text.singleton c]))
+charIs c = req $ takeCharIf (Predicate (== c) (ExpectText . Text.singleton $ c))
 
 upper, lower, digit :: Parser Char
 upper = takeCharIf (Predicate isUpper (ExpectPredicate (descriptiveLabel "upper") Nothing)) :: Parser Char
@@ -333,11 +333,11 @@ textIs fullTxt = Parser $ \cur0 -> textIs' fullTxt cur0
         -> case advance cur0 of
              -- End of input but we still need a character
              Nothing
-               -> ParseFailure [(ExpectLabel (Label ("In text" <> fullTxt) Enhancing) $ ExpectOneOf [Text.cons t ts], cur0)] cur0
+               -> ParseFailure [(ExpectLabel (Label ("In text" <> fullTxt) Enhancing) . ExpectText . Text.cons t $ ts, cur0)] cur0
 
              Just (cur1, c)
                | c == t    -> textIs' ts cur1
-               | otherwise -> ParseFailure [(ExpectLabel (Label ("In text"<>fullTxt) Enhancing) $ ExpectOneOf [Text.cons t ts],cur1)] cur1
+               | otherwise -> ParseFailure [(ExpectLabel (Label ("In text"<>fullTxt) Enhancing) . ExpectText . Text.cons t $ ts,cur1)] cur1
 
 -- | Take the longest text that matches a predicate on the characters.
 -- Possibly empty.
