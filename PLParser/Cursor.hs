@@ -58,18 +58,18 @@ remainder (Cursor _ next _) = next
 point :: Cursor -> (Text,Text,Text)
 point (Cursor prev next (Pos _t _l c))
   = let (untilLineEnd,rest) = Text.span (/= '\n') next
-      in ((Text.concat . reverse $ prev) <> untilLineEnd
-         ,Text.replicate (c-1) "-" <> "^"
-         ,rest
+      in ( (Text.concat . reverse $ prev) <> untilLineEnd
+         , Text.replicate c "-" <> "^"
+         , rest
          )
 
 pointTo :: (Pos -> Text) -> Cursor -> Text
 pointTo renderPos (Cursor prev next (Pos t l c))
   = let (untilLineEnd,rest) = Text.span (/= '\n') next
-       in mconcat [Text.concat prev, untilLineEnd, "\n"
-                  ,Text.replicate c "-","^ ","\n"
-                  ,renderPos (Pos t l c) <> "\n"
-                  ,rest
+       in mconcat [ Text.concat prev, untilLineEnd, "\n"
+                  , Text.replicate c "-","^ ","\n"
+                  , renderPos (Pos t l c) <> "\n"
+                  , rest
                   ]
 
 -- Increment a number of character along a line
