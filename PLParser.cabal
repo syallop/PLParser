@@ -26,6 +26,7 @@ library
                      , text
                      , containers
                      , PLLabel
+                     , PLPrinter
   -- hs-source-dirs:      
   default-language:    Haskell2010
 

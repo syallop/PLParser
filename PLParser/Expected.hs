@@ -44,6 +44,7 @@ data Expected
   | ExpectAnything                         -- Expected anything => got an EOF
   | ExpectN Int Expected                   -- Expected a N repetitions
   | ExpectLabel Label Expected             -- Expected something with a label
+  | ExpectThen Expected Expected           -- Expected something followed by something
   deriving Show
 
 expectNothing :: Expected
