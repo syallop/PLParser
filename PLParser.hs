@@ -30,8 +30,10 @@ module PLParser
 
    -- Functions on characters
   , takeChar
-  , Expected(..)
-  , Predicate(..)
+  , Expected (..)
+  , Label (..)
+  , LabelUse (..)
+  , Predicate (..)
   , takeCharIf
   , charIs
 
@@ -146,7 +148,7 @@ instance Monad Parser where
       -> ParseFailure failures c1
 
 instance MonadFail Parser where
-  fail msg = pFail $ ExpectLabel (Text.pack msg) ExpectAnything
+  fail msg = pFail $ ExpectLabel (Label (Text.pack msg) Descriptive) ExpectAnything
 
 -- If the left alternative fails but consumes input, pretend we havnt and try the right alternative
 instance Alternative Parser where
@@ -257,7 +259,7 @@ alternatives = foldr (<|>) mzero
 -- | Label a parser. If it fails, the label will appear in the 'Expected'
 -- section of the output.
 labeled
-  :: Text
+  :: Label
   -> Parser a
   -> Parser a
 labeled label (Parser f) = Parser $ \cur0 -> case f cur0 of
@@ -268,7 +270,7 @@ labeled label (Parser f) = Parser $ \cur0 -> case f cur0 of
     -> success
 
 -- | Infix 'labeled'.
-(<?>) :: Parser a -> Text -> Parser a
+(<?>) :: Parser a -> Label -> Parser a
 (<?>) = flip labeled
 
 
@@ -295,9 +297,9 @@ charIs
 charIs c = req $ takeCharIf (Predicate (== c) (ExpectOneOf [Text.singleton c]))
 
 upper, lower, digit :: Parser Char
-upper = takeCharIf (Predicate isUpper (ExpectPredicate "upper" Nothing)) :: Parser Char
-lower = takeCharIf (Predicate isLower (ExpectPredicate "lower" Nothing)) :: Parser Char
-digit = takeCharIf (Predicate isDigit (ExpectPredicate "digit" Nothing)) :: Parser Char
+upper = takeCharIf (Predicate isUpper (ExpectPredicate (descriptiveLabel "upper") Nothing)) :: Parser Char
+lower = takeCharIf (Predicate isLower (ExpectPredicate (descriptiveLabel "lower") Nothing)) :: Parser Char
+digit = takeCharIf (Predicate isDigit (ExpectPredicate (descriptiveLabel "digit") Nothing)) :: Parser Char
 
 -- | Take a number of chars, if the input is long enough.
 takeN
@@ -316,7 +318,6 @@ takeNIf
   -> Parser Text
 takeNIf pred i = sat pred $ takeN i
 
-
 -- | Take a string of text.
 textIs
   :: Text
@@ -332,11 +333,11 @@ textIs fullTxt = Parser $ \cur0 -> textIs' fullTxt cur0
         -> case advance cur0 of
              -- End of input but we still need a character
              Nothing
-               -> ParseFailure [(ExpectLabel ("In text" <> fullTxt) $ ExpectOneOf [Text.cons t ts], cur0)] cur0
+               -> ParseFailure [(ExpectLabel (Label ("In text" <> fullTxt) Enhancing) $ ExpectOneOf [Text.cons t ts], cur0)] cur0
 
              Just (cur1, c)
                | c == t    -> textIs' ts cur1
-               | otherwise -> ParseFailure [(ExpectLabel ("In text"<>fullTxt) $ ExpectOneOf [Text.cons t ts],cur1)] cur1
+               | otherwise -> ParseFailure [(ExpectLabel (Label ("In text"<>fullTxt) Enhancing) $ ExpectOneOf [Text.cons t ts],cur1)] cur1
 
 -- | Take the longest text that matches a predicate on the characters.
 -- Possibly empty.
@@ -375,7 +376,7 @@ dropWhile1 = req . takeWhile1
 -- | A natural number: zero and positive integers
 natural
   :: Parser Int
-natural = read . Text.unpack <$> takeWhile1 (Predicate isDigit $ ExpectPredicate "ISNATURAL" Nothing)
+natural = read . Text.unpack <$> takeWhile1 (Predicate isDigit $ ExpectPredicate (descriptiveLabel "ISNATURAL") Nothing)
 
 -- | Consume whitespace.
 whitespace
