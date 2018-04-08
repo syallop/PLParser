@@ -58,6 +58,8 @@ module PLParser
   , parseResult
 
   , Cursor(..)
+
+  , collectFailures
   ) where
 
 import Prelude hiding (takeWhile,dropWhile,exp)
@@ -69,6 +71,7 @@ import Data.Char
 import Data.Function
 import Data.Monoid
 import Data.Text (Text)
+import qualified Data.Map  as Map
 import qualified Data.List as List
 import qualified Data.Text as Text
 
@@ -163,7 +166,7 @@ instance MonadPlus Parser where
     ParseFailure failures0 cur1
       -- Consumed no input, try the next.
       | on (==) _cursorPos cur0 cur1
-       -> case pa1 cur1 of
+       -> case pa1 cur0 of
             ParseSuccess a cur2
               -> ParseSuccess a cur2
 
@@ -174,6 +177,14 @@ instance MonadPlus Parser where
       -- Consumed input. Fail.
       | otherwise
        -> ParseFailure failures0 cur1
+
+-- | Collect failures at the same cursor position, preserving the order of the
+-- expectations.
+collectFailures
+  :: [(Expected, Cursor)]
+  -> Map.Map Cursor Expected
+collectFailures
+  = Map.fromListWith ExpectEither . map (\(v,k) -> (k,v))
 
 -- | Execute a 'Parser' on some input Text, producing a possible result and leftover Text if successful.
 runParser

@@ -22,6 +22,7 @@ import Control.Applicative
 import Control.Monad
 import Data.Char
 import Data.Monoid
+import Data.Function
 import Data.Text (Text)
 import qualified Data.List as List
 import qualified Data.Text as Text
@@ -34,7 +35,10 @@ data Pos
     ,_posLine     :: Int -- Number of new lines
     ,_posLineChar :: Int -- Number characters into line
     }
-  deriving (Show, Eq)
+  deriving Show
+
+instance Eq  Pos where (==)    = on (==)    _posTotal
+instance Ord Pos where compare = on compare _posTotal
 
 -- A cursor is a position within some text, where we remember how much text we've passed,
 -- how many newlines and how much into the current line we are but not the prior text itself
@@ -45,11 +49,14 @@ data Cursor = Cursor
   }
   deriving Show
 
+instance Eq  Cursor where (==)    = on (==)    _cursorPos
+instance Ord Cursor where compare = on compare _cursorPos
+
 remainder :: Cursor -> Text
 remainder (Cursor _ next _) = next
 
 point :: Cursor -> (Text,Text,Text)
-point (Cursor prev next (Pos t l c))
+point (Cursor prev next (Pos _t _l c))
   = let (untilLineEnd,rest) = Text.span (/= '\n') next
       in ((Text.concat . reverse $ prev) <> untilLineEnd
          ,Text.replicate (c-1) "-" <> "^"
