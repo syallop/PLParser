@@ -22,11 +22,13 @@ library
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.7
+
+                     , PLLabel   >= 0.1
+                     , PLPrinter >= 0.3
+
+                     , containers
                      , fail
                      , text
-                     , containers
-                     , PLLabel
-                     , PLPrinter
   -- hs-source-dirs:      
   default-language:    Haskell2010
 
@@ -36,11 +38,13 @@ test-suite hspec
     hs-source-dirs:    Test
 
     build-depends:     base >=4.7
-                     , text
-                     , hspec
+
+                     , PLParser >= 0.1
+
                      , QuickCheck
+                     , hspec
                      , quickcheck-instances
-                     , PLParser
+                     , text
 
     default-language:  Haskell2010
 
