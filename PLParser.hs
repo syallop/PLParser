@@ -72,9 +72,10 @@ import Control.Monad.Fail
 import Data.Char
 import Data.Function
 import Data.Monoid
+import Data.Semigroup
 import Data.Text (Text)
-import qualified Data.Map  as Map
 import qualified Data.List as List
+import qualified Data.Map  as Map
 import qualified Data.Text as Text
 
 import PLParser.Cursor
@@ -112,12 +113,14 @@ data Predicate a
     ,_predicateExpect :: Expected -- What does the predicate expect? Could fall back to a simple label
     }
 
+instance Semigroup a => Semigroup (Parser a) where
+  pa0 <> pa1 = do
+    a0 <- pa0
+    a1 <- pa1
+    pure (a0 <> a1)
+
 instance Monoid a => Monoid (Parser a) where
   mempty = return mempty
-  mappend pa pa' = do
-    a  <- pa
-    a' <- pa'
-    return (a <> a')
 
 -- fmap over successfully parsed values
 instance Functor Parser where

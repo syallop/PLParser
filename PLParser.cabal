@@ -21,7 +21,7 @@ library
                      , PLParser.Expected
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.7
+  build-depends:       base >= 4.12
 
                      , PLLabel   >= 0.1
                      , PLPrinter >= 0.3
@@ -37,7 +37,7 @@ test-suite hspec
     main-is:           Spec.hs
     hs-source-dirs:    Test
 
-    build-depends:     base >=4.7
+    build-depends:     base >= 4.12
 
                      , PLParser >= 0.1
 
