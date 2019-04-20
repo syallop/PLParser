@@ -2,7 +2,10 @@ resolver: lts-13.1
 packages:
 - '.'
 - ../PLLabel
-- ../PLPrinter
+- location:
+    git: https://github.com/syallop/PLPrinter
+    commit: 65f4d3805c06fbbe0e4313f17a2129e5fe2187f9
+  extra-dep: true
 extra-deps: []
 flags: {}
 extra-package-dbs: []
