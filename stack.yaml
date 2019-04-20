@@ -1,7 +1,10 @@
 resolver: lts-13.1
 packages:
 - '.'
-- ../PLLabel
+- location:
+    git: https://github.com/syallop/PLLabel
+    commit: 9433cf7963e43b4df06f57939218956c3d2dacc4
+  extra-dep: true
 - location:
     git: https://github.com/syallop/PLPrinter
     commit: 65f4d3805c06fbbe0e4313f17a2129e5fe2187f9
