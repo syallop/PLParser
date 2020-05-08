@@ -3,7 +3,7 @@ packages:
 - .
 extra-deps:
 - git: https://github.com/syallop/PLLabel
-  commit: a95807e7d6e3b4a22b15bac1f9791bea212ef00d
+  commit: 678354d723effe569aae83623d25191c25e219a0
 - git: https://github.com/syallop/PLPrinter
   commit: 29c1fc4fe5f33086bed4855e016aa56aa80264af
 flags: {}

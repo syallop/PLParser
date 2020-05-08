@@ -46,7 +46,7 @@ data Expected
   | ExpectThen Expected Expected           -- Expected something followed by something
   | ExpectFail                             -- Expected to fail
   | ExpectText Text                        -- Expected exact text
-  deriving Show
+  deriving (Show, Eq, Ord)
 
 expectNothing :: Expected
 expectNothing = ExpectFail
