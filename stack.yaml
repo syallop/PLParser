@@ -1,15 +1,11 @@
-resolver: lts-13.1
+resolver: lts-15.11
 packages:
-- '.'
-- location:
-    git: https://github.com/syallop/PLLabel
-    commit: 9433cf7963e43b4df06f57939218956c3d2dacc4
-  extra-dep: true
-- location:
-    git: https://github.com/syallop/PLPrinter
-    commit: 65f4d3805c06fbbe0e4313f17a2129e5fe2187f9
-  extra-dep: true
-extra-deps: []
+- .
+extra-deps:
+- git: https://github.com/syallop/PLLabel
+  commit: a95807e7d6e3b4a22b15bac1f9791bea212ef00d
+- git: https://github.com/syallop/PLPrinter
+  commit: 29c1fc4fe5f33086bed4855e016aa56aa80264af
 flags: {}
 extra-package-dbs: []
 
