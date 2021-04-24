@@ -15,8 +15,11 @@ A Cursor is a position within some text.
 -}
 
 module PLParser.Cursor
-  ( Position (..)
+  ( Position ()
   , startingPosition
+  , total
+  , line
+  , withinLine
 
   , Cursor (..)
 
@@ -71,6 +74,18 @@ instance Document Position where
 -- | The starting position counts 0 characters and lines.
 startingPosition :: Position
 startingPosition = Position 0 0 0
+
+-- | The total number of characters passed.
+total :: Position -> Int
+total = _positionTotal
+
+-- | Number of lines passed.
+line :: Position -> Int
+line = _positionLine
+
+-- | Characters within the current line.
+withinLine :: Position -> Int
+withinLine = _positionWithinLine
 
 -- A cursor is a position within some text, where we remember how much text we've passed,
 -- how many newlines and how much into the current line we are but not the prior text itself

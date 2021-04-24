@@ -198,7 +198,7 @@ runParser
   :: Parser a
   -> Text
   -> ParseResult a
-runParser (Parser p) txt = p (Cursor [] txt $ Position 0 0 0)
+runParser (Parser p) txt = p (Cursor [] txt startingPosition)
 
 
 -- | Fail without consuming anything

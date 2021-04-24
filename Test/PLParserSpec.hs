@@ -22,7 +22,7 @@ import Control.Applicative
 
 import Test.Hspec
 import Test.Hspec.QuickCheck
-import Test.QuickCheck
+import Test.QuickCheck hiding (total)
 import Test.QuickCheck.Instances
 import Data.Coerce
 
@@ -159,7 +159,7 @@ altSpec = describe "Alternatives (<|>)" $ do
        in parsesSuchThat (textIs txtThatStartsTheSame <|> textIs prefix)
                          txt
                          (\_ _ -> False)
-                         (\exp (Cursor _ _ (Position total _line _char)) -> total == Text.length prefix + 1)
+                         (\exp (Cursor _ _ position) -> total position == Text.length prefix + 1)
 
 
     prop_backtrackWhenTry :: (Char,TokenText) -> (Char,TokenText) -> Bool
