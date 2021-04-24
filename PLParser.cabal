@@ -18,6 +18,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     PLParser
                      , PLParser.Cursor
+                     , PLParser.Diagnostics
                      , PLParser.Expected
                      , PLParser.State
   -- other-modules:       
