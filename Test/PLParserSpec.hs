@@ -159,7 +159,7 @@ altSpec = describe "Alternatives (<|>)" $ do
        in parsesSuchThat (textIs txtThatStartsTheSame <|> textIs prefix)
                          txt
                          (\_ _ -> False)
-                         (\exp (Cursor _ _ position) -> total position == Text.length prefix + 1)
+                         (\exp cursor -> (total . position $ cursor) == Text.length prefix + 1)
 
 
     prop_backtrackWhenTry :: (Char,TokenText) -> (Char,TokenText) -> Bool

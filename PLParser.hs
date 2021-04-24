@@ -61,7 +61,7 @@ module PLParser
   , remainder
   , parseResult
 
-  , Cursor(..)
+  , Cursor ()
 
   , collectFailures
   ) where
@@ -168,7 +168,7 @@ instance MonadPlus Parser where
 
     ParseFailure failures0 cur1
       -- Consumed no input, try the next.
-      | on (==) _cursorPosition cur0 cur1
+      | on (==) position cur0 cur1
        -> case pa1 cur0 of
             ParseSuccess a cur2
               -> ParseSuccess a cur2
@@ -194,7 +194,7 @@ runParser
   :: Parser a
   -> Text
   -> ParseResult a
-runParser (Parser p) txt = p (Cursor [] txt startingPosition)
+runParser (Parser p) txt = p . mkCursor $ txt
 
 
 -- | Fail without consuming anything
@@ -245,7 +245,7 @@ recoverWith
   -> Parser a
 recoverWith recover (Parser p) = Parser $ \cur0 -> case p cur0 of
   ParseFailure failures cur1
-    -> let Parser p1 = recover (map (\(e,c)->(e,_cursorPosition c)) failures) (_cursorPosition cur1)
+    -> let Parser p1 = recover (map (\(e,c)->(e,position c)) failures) (position cur1)
           in p1 cur1
 
   r -> r

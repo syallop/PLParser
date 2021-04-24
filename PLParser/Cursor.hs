@@ -26,10 +26,15 @@ module PLParser.Cursor
 
   , sameTotal
 
-  , Cursor (..)
+  , Cursor ()
+  , mkCursor
+  , appendToCursor
 
   -- * Access Cursor state
   , remainder
+  , prior
+  , endOfInput
+  , position
 
   -- * Print visual representation of Cursors
   , point
@@ -40,6 +45,8 @@ module PLParser.Cursor
   , advanceN
   , advanceWhile
   , advanceWhile1
+
+  , reset
   )
   where
 
@@ -130,8 +137,30 @@ instance Document Cursor where
 instance Show Cursor where
   show = Text.unpack . render . document
 
+-- | A Cursor pointing at the first character in a string of Text.
+mkCursor :: Text -> Cursor
+mkCursor next = Cursor [] next startingPosition
+
+-- | Text before the current character O(n).
+prior :: Cursor -> Text
+prior (Cursor prev _ _) = Text.reverse . Text.concat $ prev
+
+-- | The remaining chunk of Text.
 remainder :: Cursor -> Text
 remainder (Cursor _ next _) = next
+
+-- | Is the Cursor at the end of the input/ is the next chunk empty?
+endOfInput :: Cursor -> Bool
+endOfInput = (== "") . remainder
+
+-- | The position within the Cursors Text describes the total characters as well
+-- as the position within lines.
+position :: Cursor -> Position
+position = _cursorPosition
+
+-- | Append more Text to the end of a Cursor (NOT the current position).
+appendToCursor :: Text -> Cursor -> Cursor
+appendToCursor t (Cursor priorChunks nextChunk pos) = Cursor priorChunks (nextChunk <> t) pos
 
 point :: Cursor -> (Text,Text,Text)
 point (Cursor prev next (Position _t _l c))
@@ -229,4 +258,10 @@ advanceWhile1 pred cur0 =
    in if txt == ""
         then Nothing
         else Just (cur1, txt)
+
+-- | Reset a Cursor to it's starting position.
+reset
+  :: Cursor
+  -> Cursor
+reset cursor = mkCursor (prior cursor <> remainder cursor)
 
