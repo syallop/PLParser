@@ -149,25 +149,37 @@ pointTo renderPosition (Cursor prev next (Position t l c))
                   , rest
                   ]
 
--- Increment a number of character along a line
-incAlongLine :: Int -> Position -> Position
-incAlongLine i (Position t l s) = Position (t+i) l (s+i)
+{- Internal movement functions -}
 
--- Increment to a new line, reseting to position zero within the line.
--- A newline character takes up one total character.
-incLine :: Position -> Position
-incLine (Position t l _s) = Position (t+1) (l+1) 0
+-- | Move a single character along the current line.
+moveAlongLine :: Position -> Position
+moveAlongLine (Position t l s) = Position (t+1) l (s+1)
 
--- Increment a position by a string of Text moved past
-incPast :: Text -> Position -> Position
-incPast txt p = case Text.uncons txt of
-  Nothing       -> p
-  Just (c,txt') -> incPast txt' $ incPastChar c p
+-- | Move to the first position in the next line.
+--
+-- The newline-character is assumed to take up one line.
+moveToStartOfNextLine :: Position -> Position
+moveToStartOfNextLine (Position t l _s) = Position (t+1) (l+1) 0
 
-incPastChar :: Char -> Position -> Position
-incPastChar c
-  | c == '\n' = incLine
-  | otherwise = incAlongLine 1
+-- | Move past a string of Text, where:
+-- - Each character increases the total
+-- - '\n' is considered a newline
+movePast :: Text -> Position -> Position
+movePast txt = case Text.uncons txt of
+  Nothing       -> id
+  Just (c,txt') -> movePast txt' . movePastChar c
+
+-- | Move past a single Character, where:
+-- - Each character increases the total
+-- - '\n' is considered a newline
+movePastChar :: Char -> Position -> Position
+movePastChar c
+  | c == '\n' = moveToStartOfNextLine
+  | otherwise = moveAlongLine
+
+{- Public advancement functions -}
+
+-- TODO: Is it reasonable for the two advances to 'fail' in different ways?
 
 -- | Advance past the next character, returning it.
 advance
@@ -178,7 +190,7 @@ advance (Cursor prev next pos) = case Text.uncons next of
     -> Nothing
 
   Just (c, txt)
-    -> Just (Cursor (Text.singleton c : prev) txt (incPastChar c pos), c)
+    -> Just (Cursor (Text.singleton c : prev) txt (movePastChar c pos), c)
 
 -- | Advance past exactly N characters, returning the text.
 advanceN
@@ -189,7 +201,7 @@ advanceN i (Cursor prev next pos)
   | i < 0     = Nothing
   | i == 0    = Just (Cursor prev next pos, "")
   | otherwise = let (txtL, txtR) = Text.splitAt i next
-                 in Just (Cursor (txtL : prev) txtR (incPast txtL pos), txtL)
+                 in Just (Cursor (txtL : prev) txtR (movePast txtL pos), txtL)
 
 -- | Advance past the longest text that matches a predicate.
 advanceWhile
@@ -198,7 +210,7 @@ advanceWhile
   -> (Cursor, Text)
 advanceWhile pred (Cursor prev next pos) =
   let (txtL, txtR) = Text.span pred next
-   in (Cursor (txtL : prev) txtR (incPast txtL pos), txtL)
+   in (Cursor (txtL : prev) txtR (movePast txtL pos), txtL)
 
 -- | AdvanceWhile but must take at least one character.
 advanceWhile1
