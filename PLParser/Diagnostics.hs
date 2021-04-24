@@ -130,81 +130,96 @@ documentFailureSummary
 documentFailureSummary ppExpected ppCursor (FailureSummary (finalCursor, finalFailure) mDeepestFailures failuresAtStop) = mconcat $
   [ text "Parse failure at:"
   , lineBreak, lineBreak
-  , indent 2 . ppCursor $ finalCursor
-  , lineBreak
+  , indent 2 . mconcat $
+      [ ppCursor $ finalCursor
+      , lineBreak
 
-  -- TODO: We _might_ be able to generate better errors when we try (and
-  -- fail) to match a series of alternatives.
-  --
-  -- E.G.
-  -- alternatives [try p, try q] = try p <|> try q <|> mempty
-  --
-  -- This is a common top-level pattern and will result in the immediate
-  -- reason for failure being that we "expected to fail".
-  --
-  -- This is kinda misleading and so for now, the hack is to notice this
-  -- case and assume any other recorded expectations at the same position
-  -- would have allowed the parse to continue and are relevant.
-  , if goodFinalFailure
-      then mconcat
-             [ text "Expecting:"
-             , lineBreak
-             , indent 2 . ppExpected $ finalFailure
-             ]
-      else mempty
-  , lineBreak
+      -- TODO: We _might_ be able to generate better errors when we try (and
+      -- fail) to match a series of alternatives.
+      --
+      -- E.G.
+      -- alternatives [try p, try q] = try p <|> try q <|> mempty
+      --
+      -- This is a common top-level pattern and will result in the immediate
+      -- reason for failure being that we "expected to fail".
+      --
+      -- This is kinda misleading and so for now, the hack is to notice this
+      -- case and assume any other recorded expectations at the same position
+      -- would have allowed the parse to continue and are relevant.
+      , if goodFinalFailure
+          then mconcat
+                 [ text "Expecting:"
+                 , lineBreak
+                 , indent 2 . ppExpected $ finalFailure
+                 ]
+          else mempty
+      , lineBreak
 
-  -- The deepest failure is often relevant/ the 'real' failure.
-  , case mDeepestFailures of
-      Nothing
-        -> mempty
+      -- The deepest failure is often relevant/ the 'real' failure.
+      , case mDeepestFailures of
+          Nothing
+            -> mempty
 
-      Just (deepestCursor, deepestExpectations)
-        -> case Set.toList deepestExpectations of
-             []
-               -> mempty
+          Just (deepestCursor, deepestExpectations)
+            -> case Set.toList deepestExpectations of
+                 []
+                   -> mempty
 
-             [e]
-               -> mconcat
-                    [ text "Deepest failure:"
-                    , lineBreak
-                    , ppCursor deepestCursor
-                    , indent 2 . ppExpected $ e
-                    , lineBreak
-                    ]
+                 [e]
+                   -> mconcat
+                        [ lineBreak
+                        , text "Deepest failure at:"
+                        , lineBreak
+                        , indent 2 $ mconcat
+                            [ ppCursor $ deepestCursor
+                            , lineBreak
+                            , text "Expecting:"
+                            , lineBreak
+                            , indent 2 . ppExpected $ e
+                            , lineBreak
+                            ]
+                        ]
 
-             (e:es)
-               -> mconcat
-                    [ text "Deepest failure:"
-                    , lineBreak
-                    , ppCursor deepestCursor
-                    , indent 2 . ppExpected . foldr ExpectEither e $ es
-                    , lineBreak
-                    ]
+                 (e:es)
+                   -> mconcat
+                        [ lineBreak
+                        , text "Deepest failure at:"
+                        , lineBreak
+                        , indent 2 $ mconcat
+                            [ ppCursor $ deepestCursor
+                            , lineBreak
 
- -- Failures that happened to occur at the same character are
- -- potentially useful.
- --
- -- They are _not_ guaranteed to allow parsing to continue due to
- -- how backtracking (badly) interacts with these diagnostics.
- , case Set.toList failuresAtStop of
-     []
-       -> mempty
+                            , text "Expecting:"
+                            , lineBreak
+                            , indent 2 . ppExpected . foldr ExpectEither e $ es
+                            , lineBreak
+                            ]
+                        ]
 
-     [e]
-       -> mconcat $
-            [ text "Perhaps we would have allowed:"
-            , indent 2 . ppExpected $ e
-            , lineBreak
-            ]
+     -- Failures that happened to occur at the same character are
+     -- potentially useful.
+     --
+     -- They are _not_ guaranteed to allow parsing to continue due to
+     -- how backtracking (badly) interacts with these diagnostics.
+     , case Set.toList failuresAtStop of
+         []
+           -> mempty
 
-     (e:es)
-       -> mconcat $
-            [ text "Perhaps we would have allowed either:"
-            , indent 2 . ppExpected . foldr ExpectEither e $ es
-            , lineBreak
-            ]
- ]
+         [e]
+           -> mconcat $
+                [ text "Perhaps we would have allowed:"
+                , indent 2 . ppExpected $ e
+                , lineBreak
+                ]
+
+         (e:es)
+           -> mconcat $
+                [ text "Perhaps we would have allowed either:"
+                , indent 2 . ppExpected . foldr ExpectEither e $ es
+                , lineBreak
+                ]
+     ]
+  ]
   where
     goodFinalFailure = finalFailure /= ExpectFail
 
