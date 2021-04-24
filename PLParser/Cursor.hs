@@ -102,7 +102,6 @@ data Cursor = Cursor
   , _cursorNextChunk   :: Text     -- ^ The next chunk of text. The Cursor is pointing at the first character.
   , _cursorPosition    :: Position -- ^ The position within the Text is cached but should agree with the prior and current chunks.
   }
-  deriving Show
 
 -- Cursors are equal, regardless of how the prior text is chunked
 instance Eq Cursor where
@@ -116,6 +115,19 @@ instance Eq Cursor where
 instance Ord Cursor where
   compare (Cursor chunks0 next0 pos0) (Cursor chunks1 next1 pos1) =
     compare (pos0, next0, mconcat chunks0) (pos1, next1, mconcat chunks1)
+
+instance Document Cursor where
+  document c =
+    let (before, pointer, after) = point c
+     in mconcat
+          [ rawText before, lineBreak
+          , text pointer, lineBreak
+          , document (_cursorPosition c), lineBreak
+          , rawText after
+          ]
+
+instance Show Cursor where
+  show = Text.unpack . render . document
 
 remainder :: Cursor -> Text
 remainder (Cursor _ next _) = next
