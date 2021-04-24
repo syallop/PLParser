@@ -43,7 +43,6 @@ module PLParser.Cursor
   , incCursor
 
   -- * Misc
-  , dropSpaceLikes
   , peekChar
   )
   where
@@ -160,16 +159,6 @@ incCursor (Cursor prev next pos) = do
      _
       | c == '\n' -> incLine        pos
       | otherwise -> incAlongLine 1 pos
-
--- Given a position within some Text, advance the position by dropping any space
--- like characters until the first non-space character.
-dropSpaceLikes :: Cursor -> Cursor
-dropSpaceLikes (Cursor prev next pos) = case Text.uncons next of
-  Nothing -> Cursor prev next pos
-  Just (c,next')
-    | c == ' '  -> dropSpaceLikes $ Cursor (Text.singleton c : prev) next' $ incAlongLine 1 pos
-    | c == '\n' -> dropSpaceLikes $ Cursor (Text.singleton c : prev) next' $ incLine pos
-    | otherwise -> Cursor prev next pos
 
 -- | Peek at the next character without removing it.
 peekChar
