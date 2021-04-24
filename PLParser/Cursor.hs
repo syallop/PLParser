@@ -29,23 +29,36 @@ import qualified Data.Text as Text
 
 import PLParser.Expected
 
-data Pos
-  = Pos
-    {_posTotal    :: Int -- Total number of characters into a parse
-    ,_posLine     :: Int -- Number of new lines
-    ,_posLineChar :: Int -- Number characters into line
-    }
-  deriving Show
+import PLPrinter
 
-instance Eq  Pos where (==)    = on (==)    _posTotal
-instance Ord Pos where compare = on compare _posTotal
+-- | A Position within parsing some input counts by overall character as well
+-- as tracking by line.
+data Position = Position
+  { _positionTotal      :: Int -- ^ Total number of characters passed.
+  , _positionLine       :: Int -- ^ Number of lines passed.
+  , _positionWithinLine :: Int -- ^ Characters within the current line.
+  }
+  deriving (Show)
+
+instance Document Position where
+  document (Position t l c) = mconcat
+    [ text . Text.pack . show $ t
+    , text ":("
+    , (text . Text.pack . show $ l)
+    , text ","
+    , (text . Text.pack . show $ c)
+    , text ")"
+    ]
+
+instance Eq  Position where (==)    = on (==)    _positionTotal
+instance Ord Position where compare = on compare _positionTotal
 
 -- A cursor is a position within some text, where we remember how much text we've passed,
 -- how many newlines and how much into the current line we are but not the prior text itself
 data Cursor = Cursor
   {_cursorPrev :: [Text] -- chunks of text we've moved past, in reverse order
   ,_cursorNext :: Text   -- cursor is currently pointing to
-  ,_cursorPos  :: Pos    -- cache the position within the text as a whole
+  ,_cursorPos  :: Position    -- cache the position within the text as a whole
   }
   deriving Show
 
@@ -56,38 +69,38 @@ remainder :: Cursor -> Text
 remainder (Cursor _ next _) = next
 
 point :: Cursor -> (Text,Text,Text)
-point (Cursor prev next (Pos _t _l c))
+point (Cursor prev next (Position _t _l c))
   = let (untilLineEnd,rest) = Text.span (/= '\n') next
       in ( (Text.concat . reverse $ prev) <> untilLineEnd
          , Text.replicate c "-" <> "^"
          , rest
          )
 
-pointTo :: (Pos -> Text) -> Cursor -> Text
-pointTo renderPos (Cursor prev next (Pos t l c))
+pointTo :: (Position -> Text) -> Cursor -> Text
+pointTo renderPosition (Cursor prev next (Position t l c))
   = let (untilLineEnd,rest) = Text.span (/= '\n') next
        in mconcat [ Text.concat prev, untilLineEnd, "\n"
                   , Text.replicate c "-","^ ","\n"
-                  , renderPos (Pos t l c) <> "\n"
+                  , renderPosition (Position t l c) <> "\n"
                   , rest
                   ]
 
 -- Increment a number of character along a line
-incAlongLine :: Int -> Pos -> Pos
-incAlongLine i (Pos t l s) = Pos (t+i) l (s+i)
+incAlongLine :: Int -> Position -> Position
+incAlongLine i (Position t l s) = Position (t+i) l (s+i)
 
 -- Increment to a new line, reseting to position zero within the line.
 -- A newline character takes up one total character.
-incLine :: Int -> Pos -> Pos
-incLine i (Pos t l s) = Pos (t+1) (l+1) 0
+incLine :: Int -> Position -> Position
+incLine i (Position t l s) = Position (t+1) (l+1) 0
 
 -- Increment a position by a string of Text moved past
-incPast :: Text -> Pos -> Pos
+incPast :: Text -> Position -> Position
 incPast txt p = case Text.uncons txt of
   Nothing       -> p
   Just (c,txt') -> incPast txt' $ incPastChar c p
 
-incPastChar :: Char -> Pos -> Pos
+incPastChar :: Char -> Position -> Position
 incPastChar c
   | c == '\n' = incLine 1
   | otherwise = incAlongLine 1

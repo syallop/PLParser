@@ -23,7 +23,7 @@ module PLParser
   , pFail
   , pSucceed
   , require
-  , sat
+  , satisfy
   , try
   , recoverWith
   , alternatives
@@ -198,7 +198,7 @@ runParser
   :: Parser a
   -> Text
   -> ParseResult a
-runParser (Parser p) txt = p (Cursor [] txt $ Pos 0 0 0)
+runParser (Parser p) txt = p (Cursor [] txt $ Position 0 0 0)
 
 
 -- | Fail without consuming anything
@@ -219,11 +219,11 @@ require
 require p = p >>= const pSucceed
 
 -- | A parse must succeed and satisfy a predicate.
-sat
+satisfy
   :: Predicate a
   -> Parser a
   -> Parser a
-sat pred (Parser f) = Parser $ \cur0 -> case f cur0 of
+satisfy pred (Parser f) = Parser $ \cur0 -> case f cur0 of
   ParseSuccess a cur1
     | _predicate pred a -> ParseSuccess a cur1
     | otherwise         -> ParseFailure [(_predicateExpect pred, cur0)] cur1 -- cur1?
@@ -244,7 +244,7 @@ try (Parser p) = Parser $ \cur0 -> case p cur0 of
 -- | If a parser fails, recover with the given function, continuing just after
 -- the failure position.
 recoverWith
-  :: ([(Expected, Pos)] -> Pos -> Parser a)
+  :: ([(Expected, Position)] -> Position -> Parser a)
   -> Parser a
   -> Parser a
 recoverWith recover (Parser p) = Parser $ \cur0 -> case p cur0 of
@@ -293,7 +293,7 @@ takeChar = Parser $ \cur0 -> case advance cur0 of
 takeCharIf
   :: Predicate Char
   -> Parser Char
-takeCharIf pred = sat pred takeChar
+takeCharIf pred = satisfy pred takeChar
 
 -- Take a character if it is equal to the one given
 charIs
@@ -321,7 +321,7 @@ takeNIf
   :: Predicate Text
   -> Int
   -> Parser Text
-takeNIf pred i = sat pred $ takeN i
+takeNIf pred i = satisfy pred $ takeN i
 
 -- | Take a string of text.
 textIs
