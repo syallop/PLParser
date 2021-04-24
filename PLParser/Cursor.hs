@@ -40,6 +40,7 @@ module PLParser.Cursor
 
   -- * Print visual representation of Cursors
   , point
+  , documentCursor
 
   -- * Advance the postion of the Cursor.
   , advance
@@ -130,14 +131,42 @@ instance Ord Cursor where
     compare (pos0, next0, mconcat chunks0) (pos1, next1, mconcat chunks1)
 
 instance Document Cursor where
-  document c =
-    let (before, pointer, after) = point c
-     in mconcat
-          [ rawText before, lineBreak
-          , text pointer, lineBreak
-          , document (_cursorPosition c), lineBreak
-          , rawText after
-          ]
+  document = documentCursor
+
+-- | Pretty print a 'Cursor' with a gutter, line number and a pointer to the
+-- current character. Line and character numbers are rendered as 1-indexed
+-- (rather than the 0-indexed internal).
+--
+-- E.G. Line 0, Character 1:
+--
+-- @
+--  │
+-- 1│ "ad"
+--  └───┴
+-- @
+documentCursor :: Cursor -> Doc
+documentCursor c =
+  let (untilLineEnd,_rest) = Text.span (/= '\n') (remainder c)
+      lastLine = last $ Text.splitOn "\n" $ (prior c) <> untilLineEnd
+
+      -- Convert from 0-index to 1-index
+      lineNumber = (line . position $ c) + 1
+      charNumber = (withinLine . position $ c) + 1
+
+      lineNumberSize = length $ show lineNumber
+      prevGutter     = text " " <> text (Text.replicate lineNumberSize " ") <> text "│"
+      gutter         = text " " <> int lineNumber <> text "│ "
+      pointer        = text " " <> text (Text.replicate lineNumberSize " ") <> text "└" <> text (Text.replicate charNumber "─") <> text "┴"
+   in mconcat
+        [ prevGutter
+        , lineBreak
+
+        , gutter
+        , rawText lastLine
+        , lineBreak
+
+        , pointer
+        ]
 
 instance Show Cursor where
   show = Text.unpack . render . document
