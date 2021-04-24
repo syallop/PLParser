@@ -168,7 +168,7 @@ instance MonadPlus Parser where
 
     ParseFailure failures0 cur1
       -- Consumed no input, try the next.
-      | on (==) _cursorPos cur0 cur1
+      | on (==) _cursorPosition cur0 cur1
        -> case pa1 cur0 of
             ParseSuccess a cur2
               -> ParseSuccess a cur2
@@ -245,7 +245,7 @@ recoverWith
   -> Parser a
 recoverWith recover (Parser p) = Parser $ \cur0 -> case p cur0 of
   ParseFailure failures cur1
-    -> let Parser p1 = recover (map (\(e,c)->(e,_cursorPos c)) failures) (_cursorPos cur1)
+    -> let Parser p1 = recover (map (\(e,c)->(e,_cursorPosition c)) failures) (_cursorPosition cur1)
           in p1 cur1
 
   r -> r

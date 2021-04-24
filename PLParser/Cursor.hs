@@ -93,17 +93,19 @@ withinLine = _positionWithinLine
 sameTotal :: Position -> Position -> Bool
 sameTotal = on (==) _positionTotal
 
--- A cursor is a position within some text, where we remember how much text we've passed,
--- how many newlines and how much into the current line we are but not the prior text itself
+-- | A 'Cursor' is a 'Position' within some 'Text' tracking:
+-- - How many characters have been passed
+-- - How many newlines have been passed
+-- - How many characters have been passed in the current line
 data Cursor = Cursor
-  {_cursorPrev :: [Text] -- chunks of text we've moved past, in reverse order
-  ,_cursorNext :: Text   -- cursor is currently pointing to
-  ,_cursorPos  :: Position    -- cache the position within the text as a whole
+  { _cursorPriorChunks :: [Text]   -- ^ Chunks of Text that have been moved past, ordered nearest to farthest.
+  , _cursorNextChunk   :: Text     -- ^ The next chunk of text. The Cursor is pointing at the first character.
+  , _cursorPosition    :: Position -- ^ The position within the Text is cached but should agree with the prior and current chunks.
   }
   deriving Show
 
-instance Eq  Cursor where (==)    = on (==)    _cursorPos
-instance Ord Cursor where compare = on compare _cursorPos
+instance Eq  Cursor where (==)    = on (==)    _cursorPosition
+instance Ord Cursor where compare = on compare _cursorPosition
 
 remainder :: Cursor -> Text
 remainder (Cursor _ next _) = next
