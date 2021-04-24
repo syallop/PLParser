@@ -38,7 +38,6 @@ module PLParser.Cursor
 
   -- * Print visual representation of Cursors
   , point
-  , pointTo
 
   -- * Advance the postion of the Cursor.
   , advance
@@ -169,15 +168,6 @@ point (Cursor prev next (Position _t _l c))
          , Text.replicate c "-" <> "^"
          , rest
          )
-
-pointTo :: (Position -> Text) -> Cursor -> Text
-pointTo renderPosition (Cursor prev next (Position t l c))
-  = let (untilLineEnd,rest) = Text.span (/= '\n') next
-       in mconcat [ Text.concat prev, untilLineEnd, "\n"
-                  , Text.replicate c "-","^ ","\n"
-                  , renderPosition (Position t l c) <> "\n"
-                  , rest
-                  ]
 
 {- Movement functions on Positions -}
 

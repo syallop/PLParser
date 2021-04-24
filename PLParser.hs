@@ -57,7 +57,6 @@ module PLParser
   , natural
   , whitespace
 
-  , pointTo
   , remainder
   , parseResult
 
