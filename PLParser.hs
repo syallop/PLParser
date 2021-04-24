@@ -66,17 +66,13 @@ module PLParser
   , collectFailures
   ) where
 
-import Prelude hiding (takeWhile,dropWhile,exp)
+import Prelude hiding (takeWhile,dropWhile,exp,pred)
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Fail
 import Data.Char
 import Data.Function
-import Data.Monoid
-import Data.Semigroup
 import Data.Text (Text)
-import qualified Data.List as List
 import qualified Data.Map  as Map
 import qualified Data.Text as Text
 

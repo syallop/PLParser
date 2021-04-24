@@ -31,6 +31,7 @@ module PLParser.Cursor
   , remainder
 
   -- * Print visual representation of Cursors
+  , point
   , pointTo
 
   -- * Advance the postion of the Cursor.
@@ -38,21 +39,20 @@ module PLParser.Cursor
   , advanceN
   , advanceWhile
   , advanceWhile1
+
+  , incCursor
+
+  -- * Misc
+  , dropSpaceLikes
+  , peekChar
   )
   where
 
-import Prelude hiding (takeWhile,dropWhile,exp)
+import Prelude hiding (takeWhile,dropWhile,exp,pred)
 
-import Control.Applicative
-import Control.Monad
-import Data.Char
-import Data.Monoid
 import Data.Function
 import Data.Text (Text)
-import qualified Data.List as List
 import qualified Data.Text as Text
-
-import PLParser.Expected
 
 import PLPrinter
 
@@ -137,8 +137,8 @@ incAlongLine i (Position t l s) = Position (t+i) l (s+i)
 
 -- Increment to a new line, reseting to position zero within the line.
 -- A newline character takes up one total character.
-incLine :: Int -> Position -> Position
-incLine i (Position t l s) = Position (t+1) (l+1) 0
+incLine :: Position -> Position
+incLine (Position t l _s) = Position (t+1) (l+1) 0
 
 -- Increment a position by a string of Text moved past
 incPast :: Text -> Position -> Position
@@ -148,7 +148,7 @@ incPast txt p = case Text.uncons txt of
 
 incPastChar :: Char -> Position -> Position
 incPastChar c
-  | c == '\n' = incLine 1
+  | c == '\n' = incLine
   | otherwise = incAlongLine 1
 
 -- Increment the Cursor past the next character (if there is one), returning it
@@ -158,7 +158,7 @@ incCursor (Cursor prev next pos) = do
   (c,next') <- Text.uncons next
   Just . (c,) . Cursor (Text.singleton c : prev) next' $ case c of
      _
-      | c == '\n' -> incLine      1 pos
+      | c == '\n' -> incLine        pos
       | otherwise -> incAlongLine 1 pos
 
 -- Given a position within some Text, advance the position by dropping any space
@@ -168,7 +168,7 @@ dropSpaceLikes (Cursor prev next pos) = case Text.uncons next of
   Nothing -> Cursor prev next pos
   Just (c,next')
     | c == ' '  -> dropSpaceLikes $ Cursor (Text.singleton c : prev) next' $ incAlongLine 1 pos
-    | c == '\n' -> dropSpaceLikes $ Cursor (Text.singleton c : prev) next' $ incLine 1 pos
+    | c == '\n' -> dropSpaceLikes $ Cursor (Text.singleton c : prev) next' $ incLine pos
     | otherwise -> Cursor prev next pos
 
 -- | Peek at the next character without removing it.
