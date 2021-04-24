@@ -18,6 +18,7 @@ A Cursor is a position within some text.
 module PLParser.Cursor
   ( Position ()
   , startingPosition
+  , movePast
 
   , total
   , line
@@ -149,7 +150,7 @@ pointTo renderPosition (Cursor prev next (Position t l c))
                   , rest
                   ]
 
-{- Internal movement functions -}
+{- Movement functions on Positions -}
 
 -- | Move a single character along the current line.
 moveAlongLine :: Position -> Position
@@ -177,7 +178,7 @@ movePastChar c
   | c == '\n' = moveToStartOfNextLine
   | otherwise = moveAlongLine
 
-{- Public advancement functions -}
+{- Advancement functions on Cursors -}
 
 -- TODO: Is it reasonable for the two advances to 'fail' in different ways?
 
