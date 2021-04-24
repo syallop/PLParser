@@ -38,7 +38,7 @@ data Position = Position
   , _positionLine       :: Int -- ^ Number of lines passed.
   , _positionWithinLine :: Int -- ^ Characters within the current line.
   }
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 instance Document Position where
   document (Position t l c) = mconcat
@@ -49,9 +49,6 @@ instance Document Position where
     , (text . Text.pack . show $ c)
     , text ")"
     ]
-
-instance Eq  Position where (==)    = on (==)    _positionTotal
-instance Ord Position where compare = on compare _positionTotal
 
 -- A cursor is a position within some text, where we remember how much text we've passed,
 -- how many newlines and how much into the current line we are but not the prior text itself
