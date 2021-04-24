@@ -41,9 +41,6 @@ module PLParser.Cursor
   , advanceWhile1
 
   , incCursor
-
-  -- * Misc
-  , peekChar
   )
   where
 
@@ -159,12 +156,6 @@ incCursor (Cursor prev next pos) = do
      _
       | c == '\n' -> incLine        pos
       | otherwise -> incAlongLine 1 pos
-
--- | Peek at the next character without removing it.
-peekChar
-  :: Cursor
-  -> Maybe Char
-peekChar (Cursor _prev next _pos) = fst <$> Text.uncons next
 
 -- | Advance past the next character, returning it.
 advance
