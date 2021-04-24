@@ -8,7 +8,7 @@
   , TupleSections
   #-}
 {-|
-Module      : PL.Parser
+Module      : PLParser
 Copyright   : (c) Samuel A. Yallop, 2016
 Maintainer  : syallop@gmail.com
 Stability   : experimental
