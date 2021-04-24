@@ -22,7 +22,7 @@ module PLParser
   , runParser
   , pFail
   , pSucceed
-  , req
+  , require
   , sat
   , try
   , recoverWith
@@ -213,10 +213,10 @@ pSucceed
 pSucceed = Parser $ ParseSuccess ()
 
 -- | Require a parse must succeed, but any result is discarded.
-req
+require
   :: Parser a
   -> Parser ()
-req p = p >>= const pSucceed
+require p = p >>= const pSucceed
 
 -- | A parse must succeed and satisfy a predicate.
 sat
@@ -299,7 +299,7 @@ takeCharIf pred = sat pred takeChar
 charIs
   :: Char
   -> Parser ()
-charIs c = req $ takeCharIf (Predicate (== c) (ExpectText . Text.singleton $ c))
+charIs c = require $ takeCharIf (Predicate (== c) (ExpectText . Text.singleton $ c))
 
 upper, lower, digit :: Parser Char
 upper = takeCharIf (Predicate isUpper (ExpectPredicate (descriptiveLabel "upper") Nothing)) :: Parser Char
@@ -368,14 +368,14 @@ takeWhile1 pred = Parser $ \cur0 -> case advanceWhile1 (_predicate pred) cur0 of
 dropWhile
   :: (Char -> Bool)
   -> Parser ()
-dropWhile = req . takeWhile
+dropWhile = require . takeWhile
 
 -- | Drop the longest text that matches a predicate on the characters.
 -- Must succeed on at least one character.
 dropWhile1
   :: Predicate Char
   -> Parser ()
-dropWhile1 = req . takeWhile1
+dropWhile1 = require . takeWhile1
 
 
 -- | A natural number: zero and positive integers
