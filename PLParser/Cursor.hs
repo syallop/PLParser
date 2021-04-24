@@ -39,8 +39,6 @@ module PLParser.Cursor
   , advanceN
   , advanceWhile
   , advanceWhile1
-
-  , incCursor
   )
   where
 
@@ -146,16 +144,6 @@ incPastChar :: Char -> Position -> Position
 incPastChar c
   | c == '\n' = incLine
   | otherwise = incAlongLine 1
-
--- Increment the Cursor past the next character (if there is one), returning it
--- TODO: Same as advance..
-incCursor :: Cursor -> Maybe (Char,Cursor)
-incCursor (Cursor prev next pos) = do
-  (c,next') <- Text.uncons next
-  Just . (c,) . Cursor (Text.singleton c : prev) next' $ case c of
-     _
-      | c == '\n' -> incLine        pos
-      | otherwise -> incAlongLine 1 pos
 
 -- | Advance past the next character, returning it.
 advance
