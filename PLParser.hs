@@ -306,11 +306,13 @@ digit = takeCharIf (Predicate isDigit (ExpectPredicate (descriptiveLabel "digit"
 takeN
   :: Int
   -> Parser Text
-takeN i
-  = Parser $ \cur0
-              -> maybe (error "Can't take negative characters")
-                       (\(cur1, txt) -> ParseSuccess txt cur1) $ advanceN i cur0
+takeN i = Parser $ \cur0 -> case advanceN i cur0 of
+  -- No remaining characters needed
+  (cur1, 0, txt)
+    -> ParseSuccess txt cur1
 
+  (_, n, txt)
+    -> error $ "takeN: need " <> show n <> " more characters, taken " <> show txt
 
 -- | Take a number of chars if the resulting text passes a predicate.
 takeNIf

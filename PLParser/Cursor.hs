@@ -189,19 +189,25 @@ advance (Cursor prev next pos) = case Text.uncons next of
   Nothing
     -> Nothing
 
+  -- TODO: Might be better to append to prior chunk rather than accumulating
+  -- singleton chunks in the pathological case.
   Just (c, txt)
     -> Just (Cursor (Text.singleton c : prev) txt (movePastChar c pos), c)
 
--- | Advance past exactly N characters, returning the text.
+-- | Advance past N characters, returning the text and the number of characters
+-- unable to advance past. I.E. 0 on success.
 advanceN
   :: Int
   -> Cursor
-  -> Maybe (Cursor, Text)
+  -> (Cursor, Int, Text)
 advanceN i (Cursor prev next pos)
-  | i < 0     = Nothing
-  | i == 0    = Just (Cursor prev next pos, "")
+  | i < 0     = error "Can't advance backwards"
+  | i == 0    = (Cursor prev next pos, 0, "")
   | otherwise = let (txtL, txtR) = Text.splitAt i next
-                 in Just (Cursor (txtL : prev) txtR (movePast txtL pos), txtL)
+                 in ( Cursor (Text.reverse txtL : prev) txtR (movePast txtL pos)
+                    , i - Text.length txtL
+                    , txtL
+                    )
 
 -- | Advance past the longest text that matches a predicate.
 advanceWhile
@@ -210,15 +216,16 @@ advanceWhile
   -> (Cursor, Text)
 advanceWhile pred (Cursor prev next pos) =
   let (txtL, txtR) = Text.span pred next
-   in (Cursor (txtL : prev) txtR (movePast txtL pos), txtL)
+   in (Cursor (Text.reverse txtL : prev) txtR (movePast txtL pos), txtL)
 
 -- | AdvanceWhile but must take at least one character.
 advanceWhile1
   :: (Char -> Bool)
   -> Cursor
   -> Maybe (Cursor, Text)
-advanceWhile1 pred cur0 = case advanceWhile pred cur0 of
-  (cur1, txt)
-    | txt == "" -> Nothing
-    | otherwise -> Just (cur1, txt)
+advanceWhile1 pred cur0 =
+  let (cur1, txt) = advanceWhile pred cur0
+   in if txt == ""
+        then Nothing
+        else Just (cur1, txt)
 
