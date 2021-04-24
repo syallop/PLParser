@@ -50,6 +50,10 @@ instance Document Position where
     , text ")"
     ]
 
+-- | The starting position counts 0 characters and lines.
+startingPosition :: Position
+startingPosition = Position 0 0 0
+
 -- A cursor is a position within some text, where we remember how much text we've passed,
 -- how many newlines and how much into the current line we are but not the prior text itself
 data Cursor = Cursor
