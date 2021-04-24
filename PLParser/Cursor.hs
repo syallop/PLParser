@@ -161,10 +161,20 @@ position = _cursorPosition
 appendToCursor :: Text -> Cursor -> Cursor
 appendToCursor t (Cursor priorChunks nextChunk pos) = Cursor priorChunks (nextChunk <> t) pos
 
+-- | Draw a ASCII pointer to the current character within a line of code.
+-- The value represents the lines before, the pointer and the lines after.
+--
+-- Concatenated together resembles:
+--
+-- text
+-- before
+-- ----^
+-- text
+-- after
 point :: Cursor -> (Text,Text,Text)
 point (Cursor prev next (Position _t _l c))
   = let (untilLineEnd,rest) = Text.span (/= '\n') next
-      in ( (Text.concat . reverse $ prev) <> untilLineEnd
+      in ( (Text.reverse . Text.concat $ prev) <> untilLineEnd
          , Text.replicate c "-" <> "^"
          , rest
          )
