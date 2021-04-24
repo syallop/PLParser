@@ -51,6 +51,7 @@ module PLParser
   , takeWhile1
   , dropWhile
   , dropWhile1
+  , between
 
    -- Misc
   , natural
@@ -386,4 +387,12 @@ natural = read . Text.unpack <$> takeWhile1 (Predicate isDigit $ ExpectPredicate
 whitespace
   :: Parser ()
 whitespace  = dropWhile isSpace
+
+-- | Between two 'Parser's is the one we're interested in.
+between
+  :: Parser ()
+  -> Parser a
+  -> Parser ()
+  -> Parser a
+between l p r = l *> p <* r
 
