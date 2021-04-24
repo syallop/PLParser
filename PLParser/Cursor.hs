@@ -12,9 +12,11 @@ Copyright   : (c) Samuel A. Yallop, 2017
 Maintainer  : syallop@gmail.com
 Stability   : experimental
 
-A Cursor is a position within some text.
+A 'Cursor' is a 'Position' within some 'Text' tracking:
+- How many characters have been passed
+- How many newlines have been passed
+- How many characters have been passed in the current line
 -}
-
 module PLParser.Cursor
   ( Position ()
   , startingPosition
@@ -48,6 +50,10 @@ module PLParser.Cursor
   , reset
   )
   where
+{- TODO:
+ - This data structure (and it's implementation) are far from ideal. When parse
+ - time becomes a bottleneck this should certainly be replaced.
+ -}
 
 import Prelude hiding (takeWhile,dropWhile,exp,pred)
 
