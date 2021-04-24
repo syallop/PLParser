@@ -104,8 +104,18 @@ data Cursor = Cursor
   }
   deriving Show
 
-instance Eq  Cursor where (==)    = on (==)    _cursorPosition
-instance Ord Cursor where compare = on compare _cursorPosition
+-- Cursors are equal, regardless of how the prior text is chunked
+instance Eq Cursor where
+  (Cursor chunks0 next0 pos0) == (Cursor chunks1 next1 pos1) = and
+    [ pos0  == pos1
+    , next0 == next1
+    , mconcat chunks0 == mconcat chunks1
+    ]
+
+-- Cursors are ordered, regardless of how the prior text is chunked
+instance Ord Cursor where
+  compare (Cursor chunks0 next0 pos0) (Cursor chunks1 next1 pos1) =
+    compare (pos0, next0, mconcat chunks0) (pos1, next1, mconcat chunks1)
 
 remainder :: Cursor -> Text
 remainder (Cursor _ next _) = next
