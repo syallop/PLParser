@@ -14,7 +14,25 @@ Stability   : experimental
 A Cursor is a position within some text.
 -}
 
-module PLParser.Cursor where
+module PLParser.Cursor
+  ( Position (..)
+  , startingPosition
+
+  , Cursor (..)
+
+  -- * Access Cursor state
+  , remainder
+
+  -- * Print visual representation of Cursors
+  , pointTo
+
+  -- * Advance the postion of the Cursor.
+  , advance
+  , advanceN
+  , advanceWhile
+  , advanceWhile1
+  )
+  where
 
 import Prelude hiding (takeWhile,dropWhile,exp)
 
