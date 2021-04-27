@@ -3,10 +3,6 @@ module Parser.LabelSpec where
 
 import Test
 import PLParser
-import PLLabel
-
-import qualified Data.Text as Text
-import Data.Text (Text)
 
 spec :: Spec
 spec = describe "Label" $ do
