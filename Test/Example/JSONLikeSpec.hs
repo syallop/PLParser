@@ -32,9 +32,6 @@ instance Show JSONLike where
 instance Document JSONLike where
   document = text . writeJSONLike
 
-instance Document [Int] where
-  document = mconcat . fmap document
-
 spec :: Spec
 spec = describe "JSON(like) parsers" $ do
   -- 0,1,2,3,4,5,6,7,8,9
@@ -50,15 +47,15 @@ spec = describe "JSON(like) parsers" $ do
 
   -- "foo", "bar"
   prop "strings" $ do
-    text <- generate arbitraryStringValue
-    (runParser stringValue . writeJSONLike . StringValue $ text)
-      `passes` text
+    txt <- generate arbitraryStringValue
+    (runParser stringValue . writeJSONLike . StringValue $ txt)
+      `passes` txt
 
   -- True, False
   prop "booleans" $ do
-    bool <- generate arbitraryBoolValue
-    (runParser boolValue . writeJSONLike . BoolValue $ bool)
-      `passes` bool
+    b <- generate arbitraryBoolValue
+    (runParser boolValue . writeJSONLike . BoolValue $ b)
+      `passes` b
 
   -- 0, 10, "foo", True
   prop "scalars" $ do
@@ -110,7 +107,7 @@ singleDigit = alternatives
 naturalValue :: Parser Int
 naturalValue = do
   digits <- reverse <$> some singleDigit
-  pure . foldl (\total (digit,base) -> total + digit * base) 0
+  pure . foldl (\total (d,base) -> total + d * base) 0
        . zip digits
        . iterate (* 10)
        $ 1
