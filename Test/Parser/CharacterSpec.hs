@@ -19,6 +19,7 @@ spec = describe "Characters" $ do
     p `passes` ()
     p `leaves` ""
     p `located` 1
+    p `consumed` input
 
   -- Input:  ct
   -- Parser: c
@@ -29,13 +30,16 @@ spec = describe "Characters" $ do
     p `passes` ()
     p `leaves` trailing
     p `located` 1
+    p `consumed` (Text.singleton c)
 
   -- Input:  c
   -- Parser: d
   -- Expect: Rejection because the parser does not match the character.
   prop "fails when a different character is supplied" $ \(c :: Char) -> do
-    let p = runParser (charIs c) (Text.singleton . differentCharacter $ c)
+    let d = differentCharacter c
+        p = runParser (charIs c) (Text.singleton d)
     p `fails` ExpectText (Text.singleton c)
     p `leaves` ""
     p `located` 1
+    p `consumed` (Text.singleton d)
 
