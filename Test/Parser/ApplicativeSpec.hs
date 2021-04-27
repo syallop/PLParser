@@ -2,7 +2,7 @@
 module Parser.ApplicativeSpec where
 
 import Test
-import PLParser hiding (pending)
+import PLParser
 
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -10,12 +10,18 @@ import Data.Char (toUpper)
 import Data.Functor
 
 import PLPrinter
+import Control.Monad
 
-instance Document a => Document (Maybe a) where
-  document Nothing  = text "Nothing"
-  document (Just a) = mconcat [ text "Just"
-                              , document a
-                              ]
+-- Wrap Maybe to avoid declaring orphan instances
+newtype Optional a = Optional (Maybe a)
+  deriving Eq
+
+instance Document a => Document (Optional a) where
+  document (Optional Nothing)  = text "Nothing"
+  document (Optional (Just a)) = mconcat
+    [ text "Just"
+    , document a
+    ]
 
 spec :: Spec
 spec = describe "Applicative" $ do
@@ -23,12 +29,32 @@ spec = describe "Applicative" $ do
   -- Parser: SUCCEED
   -- Expect: Success because the parser always succeeds without looking at
   --         input.
-  prop "pure always succeeds" $ \(text :: Text) ->
-    runParser (pure ()) text `passes` ()
+  prop "pure always succeeds" $ \(txt :: Text) ->
+    runParser (pure ()) txt `passes` ()
 
   prop "<*>" $ \(c :: Char) -> do
     runParser (pure toUpper <*> takeChar) (Text.singleton c) `passes` toUpper c
     -- TODO: Test other cases
+
+  -- pass <*> pass = pass
+  prop "<*>" $ \(c :: Char) -> do
+    runParser (passing toUpper <*> passing c) ""
+      `passes` (toUpper c)
+
+  -- pass <*> fail = fail
+  prop "<*>" $ do
+    runParser (passing toUpper <*> mzero) ""
+      `fails` ExpectFail
+
+  -- fail <*> pass = fail
+  prop "<*>" $ do
+    runParser ((failing ExpectFail :: Parser (() -> ())) <*> passing ()) ""
+      `fails` ExpectFail
+
+  -- fail <*> pass = fail
+  prop "<*>" $ do
+    runParser ((failing ExpectFail :: Parser (() -> ())) <*> mzero) ""
+      `fails` ExpectFail
 
   prop "many" $ \(c :: Char) positive -> do
     let input = Text.replicate (getPositive positive) (Text.singleton c)
@@ -86,7 +112,7 @@ spec = describe "Applicative" $ do
       `passes` [c, c]
 
   prop "opt" $ \(c :: Char) -> do
-    let p = opt . charIs $ c
+    let p = fmap Optional . opt . charIs $ c
 
     -- Halts with no input
     (start p)
@@ -94,9 +120,9 @@ spec = describe "Applicative" $ do
 
     -- Passes with nothing when starved with no input
     (starve . start $ p)
-      `passes` Nothing
+      `passes` (Optional Nothing)
 
     -- Passes with Just when fed input
     (feed (Text.singleton c) . start $ p)
-      `passes` Just ()
+      `passes` (Optional $ Just ())
 
