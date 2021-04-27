@@ -39,23 +39,9 @@ spec :: Spec
 spec = describe "JSON(like) parsers" $ do
   -- 0,1,2,3,4,5,6,7,8,9
   prop "single digits" $ do
-    digit <- generate $ elements [0 .. 9]
-    (runParser singleDigit . Text.pack . show $ digit)
-      `passes` digit
-
-  prop "many singledigits" $ do
-    -- TODO: This is really trying to test that starving greedy parsers like
-    -- 'many' work. Move elsewhere.
-    let p = many singleDigit
-
-    halts (start p) (\_ _ -> pure ())
-    (starve . start $ p) `passes` []
-
-    halts (feed "1" . start $ p) (\_ _ -> pure ())
-    (starve . feed "1" . start $ p) `passes` [1]
-
-    halts (feed "2" . feed "1" . start $ p) (\_ _ -> pure ())
-    (starve . feed "2" . feed "1" . start $ p) `passes` [1,2]
+    d <- generate $ elements [0 .. 9]
+    (runParser singleDigit . Text.pack . show $ d)
+      `passes` d
 
   -- 0,1,..., 10,11,...
   prop "naturals" $ \positive ->
