@@ -135,7 +135,7 @@ appendToState
   :: Text
   -> State
   -> State
-appendToState additionalInput (State cursor es) = State (appendToCursor additionalInput cursor) es
+appendToState additionalInput (State c es) = State (appendToCursor additionalInput c) es
 
 -- | Record a new expectation at some Cursor.
 -- Logically, this _should_ be a prior or current cursor but is not checked.
