@@ -75,6 +75,7 @@ module PLParser
    -- Misc
   , natural
   , whitespace
+  , token
 
   , remainder
   , parseResult
@@ -641,15 +642,24 @@ takeWhile predicate = Parser $ \st -> case advanceCursorWhile (_predicate predic
 takeWhile1
   :: Predicate Char
   -> Parser Text
-takeWhile1 predicate = do
-  c   <- takeCharIf predicate
-  mCs <- opt $ takeWhile predicate
-  case mCs of
-    Nothing
-      -> passing . Text.singleton $ c
+takeWhile1 predicate = Parser $ \st -> case advanceCursorWhile1 (_predicate predicate) st of
+  Nothing
+    | endOfInput (cursor st)
+    -> Halting st (failing takeWhile1Expected) (takeWhile1 predicate)
 
-    Just cs
-      -> passing . Text.cons c $ cs
+    | otherwise
+    -> Failing st takeWhile1Expected
+
+  Just (st', txt)
+    | endOfInput (cursor st')
+    -> Halting st' (passing txt)
+                   ((txt <>) <$> takeWhile predicate)
+
+    | otherwise
+    -> Passing st' txt
+
+  where
+    takeWhile1Expected = ExpectPredicate (enhancingLabel "takeWhile1") (Just $ _predicateExpect predicate)
 
 -- | Drop the longest text that matches a predicate on the characters.
 -- Possibly empty.
@@ -668,12 +678,18 @@ dropWhile1 = require . takeWhile1
 -- | A natural number: zero and positive integers
 natural
   :: Parser Int
-natural = read . Text.unpack <$> takeWhile1 (Predicate isDigit $ ExpectPredicate (descriptiveLabel "ISNATURAL") Nothing)
+natural = read . Text.unpack <$> takeWhile1 (Predicate isDigit $ ExpectPredicate (descriptiveLabel "Natural") Nothing)
 
 -- | Consume whitespace.
 whitespace
   :: Parser ()
-whitespace  = dropWhile (Predicate isSpace (ExpectPredicate (descriptiveLabel "SPACE") Nothing))
+whitespace  = dropWhile (Predicate isSpace (ExpectPredicate (descriptiveLabel "Whitespace") Nothing))
+
+-- | A token parser consumes any amount of trailing whitespace.
+token
+  :: Parser a
+  -> Parser a
+token p = p <* (try whitespace <|> pure ())
 
 -- | Between two Parsers is the one we're interested in.
 between
