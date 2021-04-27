@@ -61,6 +61,9 @@ import Data.Function
 import Data.Text (Text)
 import qualified Data.Text as Text
 
+import Test.QuickCheck (Arbitrary(..), choose, discard)
+import Test.QuickCheck.Instances ()
+
 import PLPrinter
 
 -- | A Position within parsing some input counts by overall character as well
@@ -71,6 +74,9 @@ data Position = Position
   , _positionWithinLine :: Int -- ^ Characters within the current line.
   }
   deriving (Show, Eq, Ord)
+
+instance Arbitrary Position where
+  arbitrary = movePast <$> arbitrary <*> pure startingPosition
 
 instance Document Position where
   document (Position t l c) = mconcat
@@ -115,6 +121,15 @@ data Cursor = Cursor
   , _cursorNextChunk   :: Text     -- ^ The next chunk of text. The Cursor is pointing at the first character.
   , _cursorPosition    :: Position -- ^ The position within the Text is cached but should agree with the prior and current chunks.
   }
+
+instance Arbitrary Cursor where
+  arbitrary = do
+    input     <- arbitrary
+    advanceBy <- choose (0, Text.length input)
+    let (c, remaining, _) = advanceN advanceBy (mkCursor input)
+    if remaining /= 0
+      then discard
+      else pure c
 
 -- Cursors are equal, regardless of how the prior text is chunked
 instance Eq Cursor where

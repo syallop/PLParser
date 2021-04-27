@@ -16,22 +16,9 @@ import PLParser.Cursor
 import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck hiding (total)
-import Test.QuickCheck.Instances
 
 import Data.Text (Text)
 import qualified Data.Text as Text
-
-instance Arbitrary Cursor where
-  arbitrary = do
-    input     <- arbitrary
-    advanceBy <- choose (0, Text.length input)
-    let (c, remaining, _) = advanceN advanceBy (mkCursor input)
-    if remaining /= 0
-      then discard
-      else pure c
-
-instance Arbitrary Position where
-  arbitrary = movePast <$> arbitrary <*> pure startingPosition
 
 -- A string of text with no spaces
 newtype TokenText = TokenText {_unTokenText :: Text} deriving Show
