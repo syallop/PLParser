@@ -29,6 +29,8 @@ library
                      , PLPrinter >= 0.3
 
                      , containers
+                     , QuickCheck
+                     , quickcheck-instances
                      , fail
                      , text
   -- hs-source-dirs:      
