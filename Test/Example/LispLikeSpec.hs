@@ -5,15 +5,13 @@ import Prelude hiding (takeWhile)
 
 import Test
 
-import PLParser hiding (pending)
+import PLParser
 import PLParser.Expected
 
 import PLPrinter
 
 import Data.Text (Text)
-import Data.Map (Map)
 import qualified Data.Text as Text
-import qualified Data.Map as Map
 import GHC.Generics (Generic)
 import Data.Functor
 

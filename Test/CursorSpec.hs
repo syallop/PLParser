@@ -197,4 +197,3 @@ advanceToEnd c = case advance c of
   Just (c', char)
     -> char : advanceToEnd c'
 
-
