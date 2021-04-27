@@ -11,6 +11,7 @@ module Test
   , halts
 
   , leaves
+  , consumed
   , located
 
   -- * Generation
@@ -164,6 +165,13 @@ leaves
   -> Text
   -> Expectation
 leaves (Parsing st _) expectLeftovers = remainder (cursor st) `shouldBe` expectLeftovers
+
+-- | Leaves the exact text consumed before the Cursor.
+consumed
+  :: Parsing a
+  -> Text
+  -> Expectation
+consumed (Parsing st _) expectPrior = prior (cursor st) `shouldBe` expectPrior
 
 -- | Leaves the cursor pointing at the given total character count
 located
