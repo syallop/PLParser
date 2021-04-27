@@ -3,9 +3,7 @@ module Parser.HaltingSpec where
 
 import Test
 import PLParser
-import PLParser.Expected
 
-import Data.Text (Text)
 import qualified Data.Text as Text
 
 spec :: Spec
