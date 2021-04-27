@@ -34,7 +34,7 @@ spec :: Spec
 spec = do
   describe "Positions" $ sequence_
     [ prop "have a total that is greater or equal to the position within the current line" $
-       \position -> withinLine position <= total position
+       \pos -> withinLine pos <= total pos
 
     , describe "start with all counts at 0" $ sequence_
       [ it "in terms of total characters"       $ total     startingPosition  `shouldBe` 0
@@ -43,31 +43,31 @@ spec = do
       ]
 
     , describe "can be moved past" $ sequence_
-        [ prop "a newline" $ \position ->
-            let movedPosition = movePast "\n" position
-             in and [ total position + 1  == total movedPosition
-                    , line  position + 1  == line  movedPosition
+        [ prop "a newline" $ \pos ->
+            let movedPosition = movePast "\n" pos
+             in and [ total pos + 1  == total movedPosition
+                    , line  pos + 1  == line  movedPosition
                     , withinLine movedPosition == 0
                     ]
 
-        , prop "text without newlines" $ \position tokenText ->
+        , prop "text without newlines" $ \pos tokenText ->
             let txt = _unTokenText tokenText
                 characters = Text.length txt
-                movedPosition = movePast (_unTokenText tokenText) position
-             in and [ total position + characters == total movedPosition
-                    , line position == line movedPosition
-                    , withinLine position + characters == withinLine movedPosition
+                movedPosition = movePast (_unTokenText tokenText) pos
+             in and [ total pos + characters == total movedPosition
+                    , line pos == line movedPosition
+                    , withinLine pos + characters == withinLine movedPosition
                     ]
 
         , describe "arbitrary text" $ sequence_
-            [ prop "with the total increasing by the character count (including new lines)" $ \position text ->
-                total position + (Text.length text) == total (movePast text position)
+            [ prop "with the total increasing by the character count (including new lines)" $ \pos text ->
+                total pos + (Text.length text) == total (movePast text pos)
 
-            , prop "with the line count increasing by the number of new newlines" $ \position text ->
-                line position + (Text.length . Text.filter (== '\n') $ text) == line (movePast text position)
+            , prop "with the line count increasing by the number of new newlines" $ \pos text ->
+                line pos + (Text.length . Text.filter (== '\n') $ text) == line (movePast text pos)
 
-            , prop "with the count within the line being the characters since the last newline" $ \position text ->
-                Text.foldl (\count char -> if char == '\n' then 0 else count + 1) (withinLine position) text == withinLine (movePast text position)
+            , prop "with the count within the line being the characters since the last newline" $ \pos text ->
+                Text.foldl (\count char -> if char == '\n' then 0 else count + 1) (withinLine pos) text == withinLine (movePast text pos)
             ]
         ]
     ]
@@ -86,19 +86,19 @@ spec = do
           (Text.length . (\(_,pointer,_) -> pointer) . point $ cursor) `shouldBe` ((+1) . withinLine . position $ cursor)
 
       , prop "after the correct number of lines" $ \cursor ->
-          (Text.length . Text.filter (== '\n') . (\(before, _, _) -> before) . point $ cursor) `shouldBe` (line . position $ cursor)
+          (Text.length . Text.filter (== '\n') . (\(priorText, _, _) -> priorText) . point $ cursor) `shouldBe` (line . position $ cursor)
 
       -- Note (before,after) do NOT necessarily equal (prior,remainder) since
       -- the pointer draws the current line up to the next newline.
       , prop "whose before and after fragments are equal to the whole text" $ \cursor ->
-          ((\(before,_,after) -> before <> after) . point $ cursor) `shouldBe` (prior cursor <> remainder cursor)
+          ((\(priorText,_,afterText) -> priorText <> afterText) . point $ cursor) `shouldBe` (prior cursor <> remainder cursor)
 
       , prop "for a specific example" $ do
           let (cursor, _, _) = advanceN 5 $ mkCursor $ "abc\ndef\nhij\n"
-              (before, pointer, after) = point cursor
-          before `shouldBe` "abc\ndef"
+              (priorText, pointer, afterText) = point cursor
+          priorText `shouldBe` "abc\ndef"
           pointer `shouldBe` "-^"
-          after `shouldBe` "\nhij\n"
+          afterText `shouldBe` "\nhij\n"
       ]
 
     , describe "can be advanced" $ sequence_
@@ -109,14 +109,8 @@ spec = do
               Just (_, char)
                 -> char == Text.head (remainder cursor)
 
-        , prop "repeatedly to reconstruct the original input" $ \cursor ->
-            let advanceToEnd :: Cursor -> String
-                advanceToEnd cursor = case advance cursor of
-                  Nothing
-                    -> ""
-                  Just (cursor', char)
-                    -> char : advanceToEnd cursor'
-             in ((prior cursor <>) . Text.pack . advanceToEnd $ cursor) == (prior cursor <> remainder cursor)
+        , prop "repeatedly to reconstruct the original input" $ \c ->
+            ((prior c <>) . Text.pack . advanceToEnd $ c) == (prior c <> remainder c)
 
         , prop "and are never the same afterwards" $ \cursor ->
             (fmap fst . advance $ cursor) /= Just cursor
@@ -125,30 +119,32 @@ spec = do
             advance cursor `shouldSatisfy` \nextCursor -> case nextCursor of
               Nothing
                 -> remainder cursor == ""
-              Just (nextCursor, char)
-                -> (Text.head . Text.reverse . prior $ nextCursor) == char
+
+              Just (nextCursor', char)
+                -> (Text.head . Text.reverse . prior $ nextCursor') == char
 
         , prop "increasing their total position by one" $ \cursor ->
             advance cursor `shouldSatisfy` \nextCursor -> case nextCursor of
               Nothing
                 -> True
 
-              Just (nextCursor, _)
-                -> (total . position $ nextCursor) == ((+1) . total . position $ cursor)
+              Just (nextCursor', _)
+                -> (total . position $ nextCursor') == ((+1) . total . position $ cursor)
 
         , prop "and increase their line count, and reset if advancing over a new line" $ \cursor ->
             advance cursor `shouldSatisfy` \nextCursor -> case nextCursor of
               Nothing
                 -> True
-              Just (nextCursor, char)
+
+              Just (nextCursor', char)
                 | char == '\n'
-                -> and [(withinLine . position $ nextCursor) == 0
-                       ,(line . position $ nextCursor) == ((+1) . line . position $ cursor)
+                -> and [(withinLine . position $ nextCursor') == 0
+                       ,(line . position $ nextCursor') == ((+1) . line . position $ cursor)
                        ]
 
                 | otherwise
-                -> and [(withinLine . position $ nextCursor) == ((+1) . withinLine . position $ cursor)
-                       ,(line . position $ nextCursor) == (line . position $ cursor)
+                -> and [(withinLine . position $ nextCursor') == ((+1) . withinLine . position $ cursor)
+                       ,(line . position $ nextCursor') == (line . position $ cursor)
                        ]
         ]
 
@@ -192,4 +188,13 @@ spec = do
                 `shouldBe`
                   (prior resetCursor <> remainder resetCursor)
     ]
+
+advanceToEnd :: Cursor -> String
+advanceToEnd c = case advance c of
+  Nothing
+    -> ""
+
+  Just (c', char)
+    -> char : advanceToEnd c'
+
 
