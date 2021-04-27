@@ -64,7 +64,6 @@ module PLParser
 
    -- Functions on Text/ many characters
   , takeN
-  , takeNIf
   , textIs
   , takeWhile
   , takeWhile1
@@ -605,13 +604,6 @@ takeN i = Parser $ \st -> case advanceCursorN i st of
   (st', remaining, txt)
     -> Halting st' (failing (ExpectN remaining ExpectAnything))
                    ((txt <>) <$> takeN remaining)
-
--- | Take a number of chars if the resulting text passes a predicate.
-takeNIf
-  :: Predicate Text
-  -> Int
-  -> Parser Text
-takeNIf predicate i = satisfy predicate $ takeN i
 
 -- | Take an exact string of text from the input.
 --
