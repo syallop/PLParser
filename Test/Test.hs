@@ -47,28 +47,24 @@ module Test
 
   -- ** Pretty printing
   , Printer (..)
-  , Doc (..)
+  , Doc ()
   , textIs
   , lineBreak
   )
   where
 
-import Test.Hspec (Spec, describe, it, shouldBe, pending)
+import Test.Hspec (Spec, describe, it, pending)
 import Test.Hspec.QuickCheck (prop)
-import Test.QuickCheck (Arbitrary (..), Gen (..), generate, oneof, elements, frequency, getPositive, listOf, listOf1, sized, getSize, scale, genericShrink)
+import Test.QuickCheck (Arbitrary (..), Gen, generate, oneof, elements, frequency, getPositive, listOf, listOf1, sized, getSize, scale, genericShrink)
 import Test.Hspec.Expectations
-import Control.Applicative ((<|>))
-import Test.QuickCheck.Instances
 
-import PLParser hiding (pending)
-import PLParser.Expected
+import PLParser
 import PLParser.Cursor
 import PLParser.State
 import PLPrinter
 
 import Data.Text (Text)
 import qualified Data.Text as Text
-import qualified Data.Text (Text)
 
 expected :: Doc -> Expectation
 expected = expectationFailure . Text.unpack . render
@@ -191,26 +187,6 @@ instance Show SomeText where
 instance Arbitrary SomeText where
   arbitrary = (\c txt -> SomeText . Text.cons c $ txt) <$> arbitrary <*> arbitrary
 
-{- We can generate arbitrary unit parsers -}
-instance Arbitrary (Parser ()) where
-  arbitrary = oneof [arbitraryChar
-                    ,arbitraryText
-                    ,arbitraryThen
-                    ,arbitraryAlt
-                    ]
-    where
-      arbitraryChar :: Gen (Parser ())
-      arbitraryChar = charIs <$> arbitrary
-
-      arbitraryText :: Gen (Parser ())
-      arbitraryText = textIs <$> arbitrary
-
-      arbitraryThen :: Gen (Parser ())
-      arbitraryThen = (<>) <$> arbitrary <*> arbitrary
-
-      arbitraryAlt :: Gen (Parser ())
-      arbitraryAlt = (<|>) <$> arbitrary <*> arbitrary
-
 -- | Return a different character.
 differentCharacter :: Char -> Char
 differentCharacter c = if c == maxBound then toEnum 0 else succ c
@@ -221,11 +197,10 @@ differentCharacters c = filter (/= c) [minBound .. maxBound]
 
 -- | Return different Text.
 differentText :: Text -> Text
-differentText text = case Text.uncons text of
+differentText txt = case Text.uncons txt of
   Nothing
     -> "a"
 
-  Just (c,text')
-    -> Text.cons (differentCharacter c) text'
-
+  Just (c,txt')
+    -> Text.cons (differentCharacter c) txt'
 
