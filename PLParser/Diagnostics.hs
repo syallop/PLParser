@@ -14,6 +14,13 @@ Copyright   : (c) Samuel A. Yallop, 2021
 Maintainer  : syallop@gmail.com
 Stability   : experimental
 
+This module exists to take responsibility for the fact that producing good
+user-facing error messages for parse failures is currently hard.
+
+For now, these functions suggest _probable_ causes of failure.
+
+Ideally the underlying exception mechanism would both retain more information,
+and discard more irrelevant infomation.
 -}
 module PLParser.Diagnostics
   ( FailureSummary (..)

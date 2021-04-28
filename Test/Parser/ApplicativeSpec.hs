@@ -112,7 +112,7 @@ spec = describe "Applicative" $ do
       `passes` [c, c]
 
   prop "opt" $ \(c :: Char) -> do
-    let p = fmap Optional . opt . charIs $ c
+    let p = fmap Optional . optional . charIs $ c
 
     -- Halts with no input
     (start p)

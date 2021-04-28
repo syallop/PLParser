@@ -17,10 +17,14 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     PLParser
+                     , PLParser.Char
+                     , PLParser.Combinators
                      , PLParser.Cursor
                      , PLParser.Diagnostics
                      , PLParser.Expected
+                     , PLParser.Parser
                      , PLParser.State
+                     , PLParser.Text
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >= 4.12
