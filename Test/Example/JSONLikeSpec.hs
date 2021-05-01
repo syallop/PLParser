@@ -1,5 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables, OverloadedStrings, DeriveGeneric, FlexibleInstances #-}
-module Example.JSONLikeSpec where
+module Example.JSONLikeSpec
+  ( spec
+  )
+  where
 
 import Prelude hiding (takeWhile)
 

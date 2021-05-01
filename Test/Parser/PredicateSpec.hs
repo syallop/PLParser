@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
-module Parser.PredicateSpec where
+module Parser.PredicateSpec
+  ( spec
+  )
+  where
 
 import Prelude hiding (dropWhile)
 

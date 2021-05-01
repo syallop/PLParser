@@ -1,12 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables, OverloadedStrings, DeriveGeneric, FlexibleInstances, LambdaCase #-}
-module Example.ExprSpec where
+module Example.ExprSpec
+  ( spec
+  )
+  where
 
 import Prelude hiding (takeWhile, product)
 
 import Test
 
 import PLParser
-import PLParser.Expected
 
 import PLPrinter hiding (between)
 
@@ -14,6 +16,8 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.List (intersperse)
 import Data.Functor
+import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 
 {- Classes -}
 
@@ -176,7 +180,7 @@ instance Parse Literal where
   parse = Literal <$> token natural
 
 {- Product -}
-data Product = Product [Expr]
+data Product = Product (NonEmpty Expr)
   deriving Eq
 
 instance Show Product where
@@ -186,17 +190,17 @@ instance Document Product where
   document = text . write
 
 instance Arbitrary Product where
-  arbitrary = scaleHalf $ fmap Product . scaleHalf . listOf1 $ arbitrary
+  arbitrary = scaleHalf $ fmap (Product . NE.fromList) . scaleHalf . listOf1 $ arbitrary
 
 instance Write Product where
   write (Product es) = mconcat
     [ "*"
-    , mconcat . intersperse " " . fmap write $ es
+    , mconcat . intersperse " " . NE.toList . fmap write $ es
     ]
 
 instance Parse Product where
   parse = textIs "*"
-        *> (Product <$> some (token parse))
+        *> (Product . NE.fromList <$> some (token parse))
 
 {- SimpleExpr -}
 data SimpleExpr
@@ -308,8 +312,8 @@ instance Write Expr where
 
 instance Parse Expr where
   parse = alternatives
-    [ try (ExprComplex <$> parse)
-    , ExprSimple <$> parse
+    [ try (ExprSimple <$> parse)
+    , (ExprComplex <$> parse)
     ]
 
 
@@ -335,17 +339,6 @@ spec = describe "Expr parsers" $ do
   propExprParses "product"     (ExprComplex . ExprProduct)
 
 {- Misc -}
-
-alpha :: [Char]
-alpha = ['a'..'z'] <> ['A'..'Z']
-
-isAlpha :: Predicate Char
-isAlpha = Predicate (\c -> elem c alpha) (ExpectPredicate (descriptiveLabel "ALPHA") Nothing)
-
--- TODO: Hmm
-sepBy1 :: Parser () -> Parser a -> Parser [a]
-sepBy1 sep p = (:) <$> p
-                   <*> many (sep *> p)
 
 scaleHalf :: Gen a -> Gen a
 scaleHalf = scale (`div` 2)

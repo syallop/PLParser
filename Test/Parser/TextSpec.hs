@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
-module Parser.TextSpec where
+module Parser.TextSpec
+  ( spec
+  )
+  where
 
 import Test
 import PLParser

@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
-module Parser.LabelSpec where
+module Parser.LabelSpec
+  ( spec
+  )
+  where
 
 import Test
 import PLParser

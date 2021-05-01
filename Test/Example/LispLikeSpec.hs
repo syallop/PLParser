@@ -1,5 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables, OverloadedStrings, DeriveGeneric, FlexibleInstances #-}
-module Example.LispLikeSpec where
+module Example.LispLikeSpec
+  ( spec
+  )
+  where
 
 import Prelude hiding (takeWhile)
 

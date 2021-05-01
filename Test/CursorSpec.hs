@@ -9,7 +9,10 @@ Stability   : experimental
 
 HSpec tests for PLParser.Cursor
 -}
-module CursorSpec where
+module CursorSpec
+  ( spec
+  )
+  where
 
 import PLParser.Cursor
 

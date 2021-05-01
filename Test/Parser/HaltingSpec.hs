@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
-module Parser.HaltingSpec where
+module Parser.HaltingSpec
+  ( spec
+  )
+  where
 
 import Test
 import PLParser
