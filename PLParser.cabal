@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                PLParser
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            A NIH parser currently for use with an in-progress
                      Programming Language.
 -- description:         
@@ -42,6 +42,21 @@ library
 
   ghc-options: -Wall
 
+-- Tests are split into:
+--
+-- - Internal tests at the top level that test constituent data structures like
+--   Cursors.
+--
+-- - 'Example.*' tests that attempt to expose any bad behavior by parsing small
+--   semi-real examples. These also kinda indicate how the library can be used.
+--
+-- - 'Parser.*' tests that attempt to cover behavior exposed by functions and
+--   common instances (such as Monad, Applicative).
+--
+-- Many of these are written in property-style but really just test a few
+-- counter-examples with generated input.
+--
+-- Ideally we would do this properly.
 test-suite hspec
     type:              exitcode-stdio-1.0
     main-is:           Spec.hs
