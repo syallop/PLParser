@@ -1,4 +1,15 @@
-{-# LANGUAGE ScopedTypeVariables, OverloadedStrings, DeriveGeneric, FlexibleInstances, LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables, OverloadedStrings, DeriveGeneric, FlexibleInstances, LambdaCase, MultiWayIf #-}
+{-|
+Module      : Example.ExprSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+An incomplete - in terms of not actually being useful - expression language, with the aim of exercising:
+- The Monad interface (rather than Applicative, even when Monad isn't technically needed).
+- Character parsers (which don't backtrack, rather than text parsers which do)
+- Lookahead (with textual errors, rather than backtracking with runs on hope)
+-}
 module Example.ExprSpec
   ( spec
   )
@@ -9,15 +20,26 @@ import Prelude hiding (takeWhile, product)
 import Test
 
 import PLParser
+import PLParser.Char
 
 import PLPrinter hiding (between)
 
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Data.List (intersperse)
 import Data.Functor
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
+import Control.Applicative hiding (some, many)
+
+spec :: Spec
+spec = describe "Expr parsers" $ do
+  propExprParses "literals"    (ExprSimple  . ExprLiteral)
+  propExprParses "bindings"    (ExprSimple  . ExprBinding)
+  propExprParses "abstraction" (ExprComplex . ExprAbstraction)
+  propExprParses "application" (ExprComplex . ExprApplication)
+  propExprParses "product"     (ExprComplex . ExprProduct)
+
+  propExprParses "expressions" id
 
 {- Classes -}
 
@@ -36,21 +58,19 @@ newtype Name = Name Text
 
 instance Arbitrary Name where
   arbitrary = Name <$> elements
-    [ "Foo"
-    , "Bar"
-    , "Baz"
+    [ "foo"
+    , "bar"
+    , "baz"
     ]
 
 instance Write Name where
   write (Name n) = n
 
 instance Parse Name where
-  parse = Name <$> alternatives
-    [ textIs "Foo" $> "Foo"
-    , textIs "Bar" $> "Bar"
-    , textIs "Baz" $> "Baz"
-    ]
-
+  parse = peekChar >>= \c -> if
+    | c == 'f' -> (textIs "foo" $> Name "foo") <|> fail "The name 'foo' after seeing an 'f'."
+    | c == 'b' -> (textIs "bar" $> Name "bar") <|> (textIs "baz" $> Name "baz") <|> fail "Saw name beginning with b, expected bar or baz"
+    | otherwise -> fail "Expected a name: foo, bar or baz"
 
 {- Types -}
 
@@ -68,14 +88,13 @@ instance Write Type where
   write (Type t) = t
 
 instance Parse Type where
-  parse = Type <$> alternatives
-    [ textIs "Int"    $> "Int"
-    , textIs "String" $> "String"
-    , textIs "Bool"   $> "Bool"
-    ]
+  parse = peekChar >>= \c -> if
+    | c == 'I' -> (textIs "Int"    $> Type "Int")    <|> fail "The type 'Int' after seeing an 'I'."
+    | c == 'S' -> (textIs "String" $> Type "String") <|> fail "The type 'String' after seeing an 'S'."
+    | c == 'B' -> (textIs "Bool"   $> Type "Bool")   <|> fail "The type 'Bool' after seeing a 'B'."
+    | otherwise -> fail "Expected a type: Int, String, Bool"
 
-
-{- Abstraction: \Foo String (* 1 2) -}
+{- Abstraction: \foo : String. * 1 2 -}
 
 data Abstraction = Abstraction Name Type Expr
   deriving Eq
@@ -96,23 +115,37 @@ instance Arbitrary Abstraction where
 instance Write Abstraction where
   write (Abstraction name typ bodyExpr) = mconcat
     [ "\\"
-    , write name, " "
-    , write typ , " "
+    , write name
+    , " : "
+
+    , write typ
+    , ". "
+
     , write bodyExpr
     ]
 
 instance Parse Abstraction where
-  parse = charIs '\\'
-        *> (Abstraction
-       <$> token parse
-       <*> token parse
-       <*> token parse
-           )
+  parse = peekChar >>= \case
+    '\\' -> do charIs '\\'
+               f  <- parse
+               charIs ' '
+               charIs ':'
+               charIs ' '
+
+               ty <- parse
+               charIs '.'
+               charIs ' '
+
+               x  <- parse
+               pure $ Abstraction f ty x
+
+    _ -> fail "An Abstraction beginning with \\"
 
 
 {- Application -}
 
-data Application = Application Expr Expr
+-- @ (foo) (1)
+data Application = Application Binding Expr
   deriving Eq
 
 instance Show Application where
@@ -129,17 +162,29 @@ instance Arbitrary Application where
 
 instance Write Application where
   write (Application f x) = mconcat
-    [ "@"
-    , write f, " "
+    [ "@ ("
+    , write f, ") "
+
+    , "("
     , write x
+    , ")"
     ]
 
 instance Parse Application where
-  parse = textIs "@"
-        *> (Application
-       <$> token parse
-       <*> token parse
-           )
+  parse = peekChar >>= \case
+    '@'
+      -> do charIs '@'
+            charIs ' '
+            charIs '('
+            f <- parse
+            charIs ')'
+            charIs ' '
+            charIs '('
+            x <- parse
+            charIs ')'
+            pure $ Application f x
+
+    _ -> fail "An Application beginning with @"
 
 {- Binding -}
 data Binding = Binding Name
@@ -158,7 +203,7 @@ instance Write Binding where
   write (Binding n) = write n
 
 instance Parse Binding where
-  parse = Binding <$> token parse
+  parse = Binding <$> parse
 
 {- Literal -}
 data Literal = Literal Int
@@ -177,9 +222,11 @@ instance Write Literal where
   write (Literal i) = Text.pack . show $ i
 
 instance Parse Literal where
-  parse = Literal <$> token natural
+  parse = Literal <$> natural
 
 {- Product -}
+
+-- *(foo)(1)
 data Product = Product (NonEmpty Expr)
   deriving Eq
 
@@ -194,13 +241,21 @@ instance Arbitrary Product where
 
 instance Write Product where
   write (Product es) = mconcat
-    [ "*"
-    , mconcat . intersperse " " . NE.toList . fmap write $ es
+    [ "*("
+    , mconcat . NE.toList . fmap (\e -> write e <> ",") $ es
+    , ")"
     ]
 
 instance Parse Product where
-  parse = textIs "*"
-        *> (Product . NE.fromList <$> some (token parse))
+  parse = peekChar >>= \case
+    '*'
+      -> do charIs '*'
+            charIs '('
+            arguments <- NE.fromList <$> some (parse <* charIs ',')
+            charIs ')'
+            pure $ Product arguments
+
+    _ -> fail "A Product beginning with *"
 
 {- SimpleExpr -}
 data SimpleExpr
@@ -229,11 +284,10 @@ instance Write SimpleExpr where
       -> write b
 
 instance Parse SimpleExpr where
-  parse = alternatives
-    [ try (ExprLiteral <$> parse)
-    , ExprBinding <$> parse
-    ]
-
+  parse = peekChar >>= \c -> if
+    | c `elem` ['0'..'9'] -> ExprLiteral <$> parse
+    | c `elem` ['f','b']  -> ExprBinding <$> parse
+    | otherwise -> fail "Expected a literal number or a binding (foo, bar, baz)"
 
 {- ComplexExpr -}
 data ComplexExpr
@@ -256,30 +310,30 @@ instance Arbitrary ComplexExpr where
     ]
 
 instance Write ComplexExpr where
-  write e = mconcat
-    ["("
-    , case e of
-        ExprAbstraction a
-          -> write a
+  write = \case
+    ExprAbstraction a
+      -> write a
 
-        ExprApplication a
-          -> write a
+    ExprApplication a
+      -> write a
 
-        ExprProduct p
-          -> write p
-    , ")"
-    ]
+    ExprProduct p
+      -> write p
 
 instance Parse ComplexExpr where
-  parse = textIs "("
-        *> (alternatives
-             [ try (ExprAbstraction <$> parse)
-             , try (ExprApplication <$> parse)
-             , ExprProduct <$> parse
-             ]
-           )
-        <* textIs ")"
+  parse = peekChar >>= \case
+    '\\'
+      -> ExprAbstraction <$> parse
 
+    '*'
+      -> ExprProduct <$> parse
+
+
+    '@'
+      -> ExprApplication <$> parse
+
+    _
+      -> fail "Expected product, abstraction or application."
 
 {- Expr -}
 -- Expr is a lambda calculus with integer literals and products that abstracts
@@ -311,11 +365,10 @@ instance Write Expr where
       -> write e
 
 instance Parse Expr where
-  parse = alternatives
-    [ try (ExprSimple <$> parse)
-    , (ExprComplex <$> parse)
-    ]
-
+  parse = peekChar >>= \c -> if
+    | c `elem` ['\\', '@', '*']          -> ExprComplex <$> parse
+    | c `elem` (['0'..'9'] <> ['f','b']) -> ExprSimple  <$> parse
+    | otherwise -> fail "Expected either a simple or complex expression"
 
 propExprParses
   :: forall a
@@ -328,15 +381,11 @@ propExprParses
   => String
   -> (a -> Expr)
   -> Spec
-propExprParses test f = prop test $ \x -> (runParser parse . write . f $ x) `passes` x
-
-spec :: Spec
-spec = describe "Expr parsers" $ do
-  propExprParses "literals"    (ExprSimple  . ExprLiteral)
-  propExprParses "bindings"    (ExprSimple  . ExprBinding)
-  propExprParses "abstraction" (ExprComplex . ExprAbstraction)
-  propExprParses "application" (ExprComplex . ExprApplication)
-  propExprParses "product"     (ExprComplex . ExprProduct)
+propExprParses test f = prop test $ \x ->
+  let expr   = f x
+      parser = parse <* end
+      input  = write expr
+   in runParser parser input `passes` expr
 
 {- Misc -}
 

@@ -11,6 +11,7 @@ module PLParser.Char
   ( charIs
   , takeChar
   , takeCharIf
+  , peekChar
 
   , upper
   , lower
@@ -66,6 +67,15 @@ takeCharIf
   -> Parser Char
 takeCharIf predicate = satisfy predicate takeChar
 
+-- | Peek ahead at the next character without consuming input.
+peekChar
+  :: Parser Char
+peekChar = Parser $ \st -> case advanceCursor st of
+  Nothing
+    -> Halting st (failing ExpectAnything) peekChar
+
+  Just (_st, c)
+    -> Passing st c
 
 -- | A single upper case character, as given by 'Data.Char.isUpper'.
 upper :: Parser Char

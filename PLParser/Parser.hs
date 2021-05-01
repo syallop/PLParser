@@ -457,4 +457,3 @@ jump totalCharacters st =
         then Nothing
         else Just st'
 
-
