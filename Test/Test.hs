@@ -62,6 +62,10 @@ module Test
   , Doc ()
   , textIs
   , lineBreak
+
+  -- ** Misc
+  , nope
+  , expectedANope
   )
   where
 
@@ -215,4 +219,11 @@ differentText txt = case Text.uncons txt of
 
   Just (c,txt')
     -> Text.cons (differentCharacter c) txt'
+
+
+nope :: Parser a
+nope = fail "Nope"
+
+expectedANope :: Expected
+expectedANope = ExpectLabel (Label (Text.pack "Nope") Descriptive) ExpectAnything
 
