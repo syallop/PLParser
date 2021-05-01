@@ -64,7 +64,7 @@ test-suite hspec
 
     build-depends:     base >= 4.12
 
-                     , PLParser >= 0.1
+                     , PLParser
 
                      , QuickCheck
                      , hspec
