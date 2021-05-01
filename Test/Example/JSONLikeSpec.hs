@@ -1,4 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables, OverloadedStrings, DeriveGeneric, FlexibleInstances #-}
+{-|
+Module      : Example.JSONLikeSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+This example parses a JSON-like data structure and attempts to exercise:
+- The applicative interface
+- Backtracking/ try parsers
+-}
 module Example.JSONLikeSpec
   ( spec
   )
@@ -19,21 +29,6 @@ import qualified Data.Text as Text
 import qualified Data.Map as Map
 import GHC.Generics (Generic)
 import Data.Functor
-
--- | Similar to JSON in structure
-data JSONLike
-  = NaturalValue Int
-  | StringValue Text
-  | BoolValue Bool
-  | ArrayValue [JSONLike]
-  | ObjectValue (Map Text JSONLike)
-  deriving (Eq, Generic)
-
-instance Show JSONLike where
-  show = Text.unpack . writeJSONLike
-
-instance Document JSONLike where
-  document = text . writeJSONLike
 
 spec :: Spec
 spec = describe "JSON(like) parsers" $ do
@@ -88,6 +83,22 @@ spec = describe "JSON(like) parsers" $ do
     json <- generate . sized $ arbitraryJSONLike
     (runParser jsonLike (writeJSONLike json))
       `passes` json
+
+
+-- | Similar to JSON in structure
+data JSONLike
+  = NaturalValue Int
+  | StringValue Text
+  | BoolValue Bool
+  | ArrayValue [JSONLike]
+  | ObjectValue (Map Text JSONLike)
+  deriving (Eq, Generic)
+
+instance Show JSONLike where
+  show = Text.unpack . writeJSONLike
+
+instance Document JSONLike where
+  document = text . writeJSONLike
 
 {- Parsers -}
 

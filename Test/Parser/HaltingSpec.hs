@@ -1,4 +1,13 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-|
+Module      : Parser.HaltingSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+Test behavior of 'Parser's which 'Halt', pending more input.
+
+-}
 module Parser.HaltingSpec
   ( spec
   )

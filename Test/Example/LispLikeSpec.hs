@@ -1,4 +1,12 @@
 {-# LANGUAGE ScopedTypeVariables, OverloadedStrings, DeriveGeneric, FlexibleInstances #-}
+{-|
+Module      : Example.LispLikeSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+This example parses a LISP-like data structure, attempting to exercise recursively nested parsers.
+-}
 module Example.LispLikeSpec
   ( spec
   )
@@ -19,21 +27,6 @@ import GHC.Generics (Generic)
 import Data.Functor
 
 import qualified Control.Applicative as Applicative
-
--- | Lisp like structure, aiming to test how deeply nested recursive data
--- behaves.
-data LispLike
-  = Symbol Text
-  | List [LispLike]
-  deriving (Eq, Generic)
-
-instance Show LispLike where
-  show = Text.unpack . writeLispLike
-
-instance Document LispLike where
-  document = text. writeLispLike
-
-{- Tests -}
 
 spec :: Spec
 spec = describe "Lisp(like) parsers" $ do
@@ -56,6 +49,20 @@ spec = describe "Lisp(like) parsers" $ do
     let example = List [List [Symbol "Foo"]]
     (runParser lispLike . writeLispLike $ example)
       `passes` example
+
+
+-- | Lisp like structure, aiming to test how deeply nested recursive data
+-- behaves.
+data LispLike
+  = Symbol Text
+  | List [LispLike]
+  deriving (Eq, Generic)
+
+instance Show LispLike where
+  show = Text.unpack . writeLispLike
+
+instance Document LispLike where
+  document = text. writeLispLike
 
 {- Misc -}
 
@@ -90,7 +97,7 @@ lispLike = alternatives $
 {- Generators -}
 
 arbitrarySymbol :: Gen LispLike
-arbitrarySymbol = (Symbol . Text.pack) <$> elements ["Foo", "Bar", "Baz"] -- (elements alphaNumeric)
+arbitrarySymbol = (Symbol . Text.pack) <$> elements ["Foo", "Bar", "Baz"]
 
 arbitraryList :: Int -> Gen LispLike
 arbitraryList = fmap List . scale (`div` 2) . listOf . arbitraryLispLike . (`div` 2)

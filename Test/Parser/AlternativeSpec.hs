@@ -1,4 +1,14 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-|
+Module      : Parser.AlternativeSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+Test behavior of the 'Alternative' interface - I.E. how the 'Parser' behaves
+when multiple options are available.
+
+-}
 module Parser.AlternativeSpec
   ( spec
   )

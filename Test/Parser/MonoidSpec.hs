@@ -1,4 +1,13 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-|
+Module      : Parser.MonoidSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+Test behavior of the 'Monoid' interface - I.E. how the results of 'Parser' can be combined.
+
+-}
 module Parser.MonoidSpec
   ( spec
   )

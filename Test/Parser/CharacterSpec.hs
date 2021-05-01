@@ -1,4 +1,13 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-|
+Module      : Parser.CharacterSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+Test behavior of individual character 'Parsers'.
+
+-}
 module Parser.CharacterSpec
   ( spec
   )

@@ -1,4 +1,14 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-|
+Module      : Parser.MonadSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+Test behavior of the 'Monad' interface - I.E. how the 'Parser' behaves
+when results are required to decide how subsequent 'Parsers' behave.
+
+-}
 module Parser.MonadSpec
   ( spec
   )

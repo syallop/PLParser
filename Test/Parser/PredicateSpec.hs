@@ -1,4 +1,13 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-|
+Module      : Parser.PredicateSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+Test behavior of the 'Predicate' structure used to parse conditionally of some property.
+
+-}
 module Parser.PredicateSpec
   ( spec
   )

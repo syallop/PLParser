@@ -1,4 +1,13 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-|
+Module      : Parser.TextSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+Test behavior of 'Parsers' which operate on strings of 'Text' (rather than individual characters).
+
+-}
 module Parser.TextSpec
   ( spec
   )

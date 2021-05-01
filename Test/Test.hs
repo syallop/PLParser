@@ -3,6 +3,18 @@
            , RankNTypes
            , ScopedTypeVariables
   #-}
+{-|
+Module      : Test
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+This module exports helper functions for:
+- Asserting the result of parses with semi-readable output
+- Asserting properties of parses (position of cursors, leftovers, etc)
+- Generating input
+- Misc Hspec, quickcheck functions used to write tests.
+-}
 module Test
   (
   -- * Test Parsing Results

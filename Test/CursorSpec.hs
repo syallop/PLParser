@@ -7,7 +7,7 @@ Copyright   : (c) Samuel A. Yallop, 2016
 Maintainer  : syallop@gmail.com
 Stability   : experimental
 
-HSpec tests for PLParser.Cursor
+Test that 'Cursor's behave as expected.
 -}
 module CursorSpec
   ( spec

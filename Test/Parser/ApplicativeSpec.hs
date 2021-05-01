@@ -1,4 +1,14 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-|
+Module      : Parser.ApplicativeSpec
+Copyright   : (c) Samuel A. Yallop, 2021
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+Test behavior of the 'Applicative' interface - I.E. how the 'Parser' behaves
+when functions are returned by 'Parsers' and applied across other 'Parser' results.
+
+-}
 module Parser.ApplicativeSpec
   ( spec
   )
@@ -37,7 +47,6 @@ spec = describe "Applicative" $ do
 
   prop "<*>" $ \(c :: Char) -> do
     runParser (pure toUpper <*> takeChar) (Text.singleton c) `passes` toUpper c
-    -- TODO: Test other cases
 
   -- pass <*> pass = pass
   prop "<*>" $ \(c :: Char) -> do
@@ -78,13 +87,6 @@ spec = describe "Applicative" $ do
       `passes` (replicate (getPositive positive) c)
 
   prop "many fed input incrementally" $ \(c :: Char) -> do
-    --let p = many (charIs c *> pure c)
-
-    -- TODO: For some reason this requires starve to have recursive behavior.
-    -- That's only desired behavior if:
-    -- - Double halting is fine
-    -- - Nested halts always terminate.
-    -- Either the double halt behavior should be tested elsewhere
     let notC = differentCharacter c
         p = many . alternatives $ [ try $ charIs notC $> notC
                                   , charIs c    $> c
