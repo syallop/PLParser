@@ -250,13 +250,11 @@ instance Functor Parser where
       -> Halting st' (fmap f done) (fmap f more)
 
 instance Applicative Parser where
-  pure a = Parser $ \st -> Parsing st $ Pass a
+  -- | Consume nothing to produce the value.
+  pure a = Parser $ \st -> Passing st a
   (<*>) = ap
 
 instance Monad Parser where
-  -- | Consume nothing to produce the value.
-  return a = Parser $ \st -> Passing st a
-
   -- | The Parser must succeed and may consume input. The result and remaining
   -- input is passed into f.
   (>>=) :: forall a b. Parser a -> (a -> Parser b) -> Parser b

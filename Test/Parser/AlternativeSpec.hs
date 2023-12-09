@@ -89,40 +89,52 @@ spec = do
     -- TODO: Test isn't testing this, but that the expectation comes from the
     -- right side.
     prop "rejects with expectations from both parsers when both fail without consuming input" $ \(c0 :: Char) ->
-      let [c1, c2] = take 2 . differentCharacters $ c0
-       in runParser (try (charIs c1) <|> charIs c2) (Text.singleton c0)
-            `fails` (ExpectText . Text.singleton $ c2)
+      case differentCharacters c0 of
+        (c1:c2:_)
+          -> runParser (try (charIs c1) <|> charIs c2) (Text.singleton c0)
+            `  fails` (ExpectText . Text.singleton $ c2)
+
+        _ -> error "Test error"
 
     {- Test the 'alternatives' combinator behaves like chains of <|>s -}
 
-    prop "multiple alternatives will fail at the first when input is consumed" $ \(c0 :: Char) -> do
-      let [c1, c2, c3] = take 3 . differentCharacters $ c0
-          p = alternatives [ charIs c1
-                           , charIs c2
-                           , charIs c3
-                           ]
-      runParser p (Text.singleton c0)
-        `fails` (ExpectText . Text.singleton $ c1)
-      runParser p (Text.singleton c2)
-        `fails` (ExpectText . Text.singleton $ c1)
-      runParser p (Text.singleton c3)
-        `fails` (ExpectText . Text.singleton $ c1)
+    prop "multiple alternatives will fail at the first when input is consumed" $ \(c0 :: Char) ->
+      case differentCharacters c0 of
+        (c1:c2:c3:_)
+          -> let p = alternatives [ charIs c1
+                                  , charIs c2
+                                  , charIs c3
+                                  ]
+              in do runParser p (Text.singleton c0)
+                      `fails` (ExpectText . Text.singleton $ c1)
+                    runParser p (Text.singleton c2)
+                      `fails` (ExpectText . Text.singleton $ c1)
+                    runParser p (Text.singleton c3)
+                      `fails` (ExpectText . Text.singleton $ c1)
 
-    prop "multiple alternatives can fail ta the last when previous consuming failures were wrapped in try's" $ \(c0 :: Char) -> do
-      let [c1, c2, c3] = take 3 . differentCharacters $ c0
-          p = alternatives [ try $ charIs c1
-                           , try $ charIs c2
-                           , charIs c3
-                           ]
-      runParser p (Text.singleton c0)
-        `fails` (ExpectText . Text.singleton $ c3)
+        _ -> error "Test error"
 
-    prop "multiple alternatives can pass at the last when previous consuming failures were wrapped in try's" $ \(c0 :: Char) -> do
-      let [c1, c2, c3] = take 3 . differentCharacters $ c0
-          p = alternatives [ try $ charIs c1
-                           , try $ charIs c2
-                           , charIs c3
-                           ]
-      runParser p (Text.singleton c3)
-        `passes` ()
+    prop "multiple alternatives can fail ta the last when previous consuming failures were wrapped in try's" $ \(c0 :: Char) ->
+      case differentCharacters c0 of
+        (c1:c2:c3:_)
+          -> let p = alternatives [ try $ charIs c1
+                                  , try $ charIs c2
+                                  , charIs c3
+                                  ]
+              in runParser p (Text.singleton c0)
+                   `fails` (ExpectText . Text.singleton $ c3)
+
+        _ -> error "Test error"
+
+    prop "multiple alternatives can pass at the last when previous consuming failures were wrapped in try's" $ \(c0 :: Char) ->
+      case differentCharacters c0 of
+        (c1:c2:c3:_)
+          -> let p = alternatives [ try $ charIs c1
+                                  , try $ charIs c2
+                                  , charIs c3
+                                  ]
+              in runParser p (Text.singleton c3)
+                   `passes` ()
+
+        _ -> error "Test error"
 
